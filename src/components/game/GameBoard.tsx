@@ -3,6 +3,7 @@
 import type { AnswerMode } from "@/types/game";
 import { ANSWER_MODE_LABELS, optionsForMode } from "@/lib/game-rules";
 import { MusicalBlindTest } from "@/components/game/MusicalBlindTest";
+import { VideoPrompt } from "@/components/game/VideoPrompt";
 
 type GameBoardProps = {
   questionText: string;
@@ -16,10 +17,15 @@ type GameBoardProps = {
   leftLabel?: string;
   rightLabel?: string;
   audioUrl?: string | null;
+  videoUrl?: string | null;
   musicPlayNonce?: number;
   musicStopNonce?: number;
+  videoPlayNonce?: number;
+  videoStopNonce?: number;
   showMusicalPlayer?: boolean;
   isMusical?: boolean;
+  showVideoPlayer?: boolean;
+  isVideo?: boolean;
 };
 
 function AnswerPill({
@@ -53,10 +59,15 @@ export function GameBoard({
   leftLabel,
   rightLabel,
   audioUrl,
+  videoUrl,
   musicPlayNonce = 0,
   musicStopNonce = 0,
+  videoPlayNonce = 0,
+  videoStopNonce = 0,
   showMusicalPlayer = false,
   isMusical = false,
+  showVideoPlayer = false,
+  isVideo = false,
 }: GameBoardProps) {
   const modeChosen = displayMode !== null;
   const visibleOptions = displayMode
@@ -93,7 +104,23 @@ export function GameBoard({
         </div>
       )}
 
-      {!modeChosen && !isMusical && (
+      {showVideoPlayer && isVideo && videoUrl && (
+        <VideoPrompt
+          videoUrl={videoUrl}
+          playNonce={videoPlayNonce}
+          stopNonce={videoStopNonce}
+        />
+      )}
+
+      {isVideo && !showVideoPlayer && (
+        <div className="relative z-10 mx-auto mb-6 max-w-lg rounded-2xl border-2 border-indigo-400/50 bg-indigo-950/40 px-6 py-4 text-center">
+          <p className="text-2xl">🎬</p>
+          <p className="font-bold text-indigo-200">Vidéo — écran TV</p>
+          <p className="text-sm text-violet-300">Lance la vidéo depuis le pupitre.</p>
+        </div>
+      )}
+
+      {!modeChosen && !isMusical && !isVideo && (
         <div className="relative mx-auto mb-8 max-w-2xl animate-pulse rounded-3xl border-4 border-dashed border-amber-400/60 bg-violet-950/40 px-8 py-10 text-center">
           <p className="text-2xl font-bold text-amber-300">
             Le participant choisit son mode

@@ -46,4 +46,8 @@ next-env.d.ts
 /public/audio/*
 !/public/audio/.gitkeep
 
+# uploads vidéo locaux
+/public/video/*
+!/public/video/.gitkeep
+
 /src/generated/prisma

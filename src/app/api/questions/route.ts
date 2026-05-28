@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       : undefined;
   const notes = body.notes ? String(body.notes) : undefined;
   const audioUrl = body.audioUrl ? String(body.audioUrl).trim() : null;
+  const videoUrl = body.videoUrl ? String(body.videoUrl).trim() : null;
 
   if (!text.trim() || !category.trim() || !correctAnswer.trim()) {
     return NextResponse.json(
@@ -64,6 +65,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (kind === "VIDEO" && !videoUrl) {
+    return NextResponse.json(
+      { error: "Uploadez une vidéo pour une question vidéo." },
+      { status: 400 },
+    );
+  }
+
   try {
     const question = await prisma.question.create({
       data: {
@@ -78,6 +86,7 @@ export async function POST(request: Request) {
         qualifSlot: qualifSlot ?? null,
         notes: notes?.trim() || null,
         audioUrl: kind === "MUSICAL" ? audioUrl : null,
+        videoUrl: kind === "VIDEO" ? videoUrl : null,
       },
     });
 

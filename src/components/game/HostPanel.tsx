@@ -4,7 +4,7 @@ import { useState } from "react";
 import type { AnswerMode, GameRound, Question } from "@/types/game";
 import { ANSWER_MODE_LABELS, ROUND_LABELS } from "@/lib/game-rules";
 import { ResponseHistory } from "@/components/game/ResponseHistory";
-import { isMusicalQuestion } from "@/lib/question-utils";
+import { isMusicalQuestion, isVideoQuestion } from "@/lib/question-utils";
 
 type Player = {
   id: string;
@@ -28,6 +28,8 @@ type HostPanelProps = {
   finaleHidden: boolean;
   musicPlayNonce: number;
   musicStopNonce: number;
+  videoPlayNonce: number;
+  videoStopNonce: number;
   onSessionUpdate: () => void;
 };
 
@@ -44,6 +46,8 @@ export function HostPanel({
   finaleHidden,
   musicPlayNonce,
   musicStopNonce,
+  videoPlayNonce,
+  videoStopNonce,
   onSessionUpdate,
 }: HostPanelProps) {
   const [historyKey, setHistoryKey] = useState(0);
@@ -65,6 +69,8 @@ export function HostPanel({
       revealAnswer: false,
       musicPlayNonce: 0,
       musicStopNonce: 0,
+      videoPlayNonce: 0,
+      videoStopNonce: 0,
     });
   }
 
@@ -74,6 +80,14 @@ export function HostPanel({
 
   async function stopMusicExtract() {
     await patchSession({ musicStopNonce: musicStopNonce + 1 });
+  }
+
+  async function playVideo() {
+    await patchSession({ videoPlayNonce: videoPlayNonce + 1 });
+  }
+
+  async function stopVideo() {
+    await patchSession({ videoStopNonce: videoStopNonce + 1 });
   }
 
   async function setParticipantMode(mode: AnswerMode) {
@@ -213,6 +227,7 @@ export function HostPanel({
           {filteredQuestions.map((q) => (
             <option key={q.id} value={q.id}>
               {q.kind === "MUSICAL" ? "🎵 " : ""}
+              {q.kind === "VIDEO" ? "🎬 " : ""}
               {q.category} — {q.text.slice(0, 50)}…
             </option>
           ))}
@@ -241,6 +256,32 @@ export function HostPanel({
             <button
               type="button"
               onClick={stopMusicExtract}
+              className="rounded-lg bg-violet-800 px-4 py-2 font-bold hover:bg-violet-700"
+            >
+              ⏸
+            </button>
+          </div>
+        </section>
+      )}
+
+      {currentQuestion && isVideoQuestion(currentQuestion) && (
+        <section className="space-y-2 rounded-lg border border-indigo-500/50 bg-indigo-950/40 p-3">
+          <h3 className="font-semibold text-indigo-200">Vidéo</h3>
+          <p className="text-xs text-violet-300">
+            Sur l&apos;écran TV : toucher l&apos;écran une fois pour activer la lecture,
+            puis lancer la vidéo.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={playVideo}
+              className="flex-1 rounded-lg bg-indigo-600 py-2 font-bold text-white hover:bg-indigo-500"
+            >
+              ▶ Lancer la vidéo
+            </button>
+            <button
+              type="button"
+              onClick={stopVideo}
               className="rounded-lg bg-violet-800 px-4 py-2 font-bold hover:bg-violet-700"
             >
               ⏸

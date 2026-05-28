@@ -23,6 +23,15 @@ async function uploadMp3(file: File): Promise<string> {
   return data.url as string;
 }
 
+async function uploadVideo(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch("/api/video/upload", { method: "POST", body: formData });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Échec de l'upload vidéo.");
+  return data.url as string;
+}
+
 export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) {
   const [kind, setKind] = useState<QuestionKind>(initial?.kind ?? "TEXT");
   const [text, setText] = useState(initial?.text ?? "");
@@ -40,12 +49,15 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
     initial?.qualifSlot?.toString() ?? "",
   );
   const [audioUrl, setAudioUrl] = useState(initial?.audioUrl ?? "");
+  const [videoUrl, setVideoUrl] = useState(initial?.videoUrl ?? "");
   const [mp3File, setMp3File] = useState<File | null>(null);
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const optionCount = answerMode === "DUO" ? 2 : answerMode === "CARRE" ? 4 : 0;
   const isMusical = kind === "MUSICAL";
+  const isVideo = kind === "VIDEO";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,12 +66,23 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
 
     try {
       let finalAudioUrl = audioUrl;
+      let finalVideoUrl = videoUrl;
 
       if (isMusical) {
         if (mp3File) {
           finalAudioUrl = await uploadMp3(mp3File);
         } else if (!finalAudioUrl) {
           setError("Choisissez un fichier MP3.");
+          setLoading(false);
+          return;
+        }
+      }
+
+      if (isVideo) {
+        if (videoFile) {
+          finalVideoUrl = await uploadVideo(videoFile);
+        } else if (!finalVideoUrl) {
+          setError("Choisissez une vidéo (MP4/WebM).");
           setLoading(false);
           return;
         }
@@ -76,6 +99,7 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
         theme: theme || undefined,
         qualifSlot: qualifSlot ? Number(qualifSlot) : undefined,
         audioUrl: isMusical ? finalAudioUrl : undefined,
+        videoUrl: isVideo ? finalVideoUrl : undefined,
       };
 
       const url = initial ? `/api/questions/${initial.id}` : "/api/questions";
@@ -140,9 +164,31 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
         </div>
       )}
 
+      {isVideo && (
+        <div className="space-y-3 rounded-xl border border-indigo-500/40 bg-indigo-950/30 p-4">
+          <p className="text-sm font-semibold text-indigo-200">Fichier vidéo</p>
+          <p className="text-xs text-violet-400">
+            Donnez une vidéo unique (pas de timecode). L'écran TV jouera la vidéo quand
+            vous lancerez depuis le pupitre.
+          </p>
+          <input
+            type="file"
+            accept="video/mp4,video/webm,.mp4,.webm"
+            onChange={(e) => setVideoFile(e.target.files?.[0] ?? null)}
+            className="w-full text-sm text-violet-200 file:mr-3 file:rounded-lg file:border-0 file:bg-indigo-600 file:px-4 file:py-2 file:font-bold file:text-white"
+          />
+          {videoUrl && !videoFile && (
+            <p className="text-xs text-lime-400">
+              Vidéo actuelle : {videoUrl.split("/").pop()}
+              {" — laissez vide pour la conserver, ou choisissez une nouvelle vidéo."}
+            </p>
+          )}
+        </div>
+      )}
+
       <div>
         <label className="mb-1 block text-sm text-violet-300">
-          {isMusical ? "Consigne affichée" : "Question"}
+          {isMusical || isVideo ? "Consigne affichée" : "Question"}
         </label>
         <textarea
           required
@@ -150,7 +196,11 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={
-            isMusical ? "Quel est ce titre ? Quel est cet artiste ?" : undefined
+            isMusical
+              ? "Quel est ce titre ? Quel est cet artiste ?"
+              : isVideo
+                ? "Que se passe-t-il dans cette vidéo ?"
+                : undefined
           }
           className="w-full rounded-lg border border-violet-700 bg-violet-950 px-3 py-2"
         />
@@ -162,7 +212,7 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
             required
             value={category}
             onChange={(e) => setCategory(e.target.value.toUpperCase())}
-            placeholder={isMusical ? "BLIND TEST" : "NOBEL DE LA PAIX"}
+            placeholder={isMusical ? "BLIND TEST" : isVideo ? "VIDÉO" : "NOBEL DE LA PAIX"}
             className="w-full rounded-lg border border-violet-700 bg-violet-950 px-3 py-2"
           />
         </div>

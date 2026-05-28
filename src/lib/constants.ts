@@ -15,4 +15,5 @@ export const ANSWER_MODE_OPTIONS = [
 export const QUESTION_KIND_OPTIONS = [
   { value: "TEXT", label: "Classique (texte)" },
   { value: "MUSICAL", label: "Musicale (MP3)" },
+  { value: "VIDEO", label: "Vidéo (upload)" },
 ] as const;
