@@ -1,0 +1,109 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum QuestionRound {
+  QUALIFS
+  COMPET
+  FINALE
+}
+
+enum AnswerMode {
+  CASH
+  DUO
+  CARRE
+}
+
+enum QuestionKind {
+  TEXT
+  MUSICAL
+}
+
+enum GameRound {
+  QUALIFS
+  COMPET
+  FINALE
+}
+
+enum SessionStatus {
+  SETUP
+  IN_PROGRESS
+  FINISHED
+}
+
+enum CompetWave {
+  DUO
+  CARRE
+  CASH
+  INDIVIDUAL
+}
+
+model Question {
+  id                  String        @id @default(cuid())
+  kind                QuestionKind  @default(TEXT)
+  text                String
+  category            String
+  round               QuestionRound
+  answerMode          AnswerMode
+  correctAnswer       String
+  options             String[]
+  theme               String?
+  qualifSlot          Int?
+  notes               String?
+  audioUrl            String?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+}
+
+model GameSession {
+  id                String        @id @default(cuid())
+  status            SessionStatus @default(SETUP)
+  currentRound      GameRound     @default(QUALIFS)
+  championName      String?
+  competTheme       String?
+  currentQuestionId String?
+  displayMode       AnswerMode?
+  revealAnswer      Boolean       @default(false)
+  qualifQuestionSlot Int?
+  competWave        CompetWave?
+  finaleHidden      Boolean       @default(true)
+  musicPlayNonce    Int           @default(0)
+  musicStopNonce    Int           @default(0)
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  players           GamePlayer[]
+  responses         PlayerResponse[]
+}
+
+model GamePlayer {
+  id         String           @id @default(cuid())
+  sessionId  String
+  session    GameSession      @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name       String
+  score      Int              @default(0)
+  orderIndex Int
+  qualified  Boolean          @default(false)
+  isChampion Boolean          @default(false)
+  eliminated Boolean          @default(false)
+  responses  PlayerResponse[]
+}
+
+model PlayerResponse {
+  id               String      @id @default(cuid())
+  sessionId        String
+  session          GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  playerId         String
+  player           GamePlayer  @relation(fields: [playerId], references: [id], onDelete: Cascade)
+  questionId       String?
+  round            GameRound
+  answerMode       AnswerMode
+  correct          Boolean
+  points           Int
+  competIndividual Boolean     @default(false)
+  createdAt        DateTime    @default(now())
+}
