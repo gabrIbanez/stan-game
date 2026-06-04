@@ -74,6 +74,12 @@ export async function PATCH(request: Request, { params }: Params) {
       ...(body.showJoinQrOnScreen !== undefined && {
         showJoinQrOnScreen: body.showJoinQrOnScreen,
       }),
+      ...(body.targetPlayerId !== undefined && {
+        targetPlayerId: body.targetPlayerId,
+      }),
+      ...(body.showTargetPlayerOnTv !== undefined && {
+        showTargetPlayerOnTv: body.showTargetPlayerOnTv,
+      }),
     },
     include: {
       players: { orderBy: { orderIndex: "asc" } },

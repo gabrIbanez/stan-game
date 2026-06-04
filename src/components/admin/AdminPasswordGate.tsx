@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import {
   adminFetch,
   isAdminUnlockedLocally,
+  setAdminUnlockedLocally,
   unlockAdmin,
 } from "@/lib/admin-auth";
 
@@ -32,6 +33,7 @@ export function AdminPasswordGate({
         setChecking(false);
         return;
       }
+      setAdminUnlockedLocally();
       setUnlocked(true);
       setChecking(false);
     }

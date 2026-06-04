@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { ParticipantWelcomeBanner } from "@/components/game/ParticipantWelcomeBanner";
+import { TvPlayerFocus } from "@/components/game/TvPlayerFocus";
 import { getStoredJoinPlayer } from "@/lib/session-join";
 import type { GameSession, GamePlayer, Question } from "@/types/game";
 import { GameBoard } from "@/components/game/GameBoard";
@@ -64,9 +65,13 @@ export default function EcranPage() {
     );
   }
 
-  const showQr =
-    session.showJoinQrOnScreen &&
-    !session.currentQuestionId;
+  const targetPlayer = session.targetPlayerId
+    ? session.players.find((p) => p.id === session.targetPlayerId)
+    : null;
+  const showTargetName =
+    session.showTargetPlayerOnTv && targetPlayer && !session.showJoinQrOnScreen;
+
+  const showQr = session.showJoinQrOnScreen && !session.currentQuestionId;
 
   if (showQr) {
     return (
@@ -82,59 +87,64 @@ export default function EcranPage() {
     );
   }
 
-  if (!currentQuestion) {
+  if (currentQuestion) {
+    const displayMode = session.displayMode;
+    const champion = session.players.find((p) => p.isChampion);
+    const challenger = session.players
+      .filter((p) => !p.isChampion && !p.eliminated)
+      .sort((a, b) => b.score - a.score)[0];
+
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-indigo-950 to-purple-950">
-        <p className="text-3xl font-bold text-amber-400 animate-pulse">
-          En attente de la question…
-        </p>
+      <div className="min-h-screen">
+        <GameBoard
+          questionText={currentQuestion.text}
+          category={currentQuestion.category}
+          options={currentQuestion.options}
+          correctAnswer={currentQuestion.correctAnswer}
+          displayMode={displayMode}
+          revealAnswer={session.revealAnswer}
+          targetPlayerName={showTargetName ? targetPlayer?.name : null}
+          leftScore={
+            session.currentRound === "FINALE" && session.finaleHidden
+              ? undefined
+              : challenger?.score
+          }
+          rightScore={
+            session.currentRound === "FINALE" && session.finaleHidden
+              ? undefined
+              : champion?.score
+          }
+          leftLabel={challenger?.name}
+          rightLabel={champion?.name ?? "Champion"}
+          audioUrl={getMusicalAudioUrl(currentQuestion)}
+          musicPlayNonce={session.musicPlayNonce}
+          musicStopNonce={session.musicStopNonce}
+          isMusical={isMusicalQuestion(currentQuestion)}
+          showMusicalPlayer={isMusicalQuestion(currentQuestion)}
+          videoUrl={getVideoUrl(currentQuestion)}
+          videoPlayNonce={session.videoPlayNonce}
+          videoStopNonce={session.videoStopNonce}
+          isVideo={isVideoQuestion(currentQuestion)}
+          showVideoPlayer={isVideoQuestion(currentQuestion)}
+          imageUrl={getImageUrl(currentQuestion)}
+          imagePlayNonce={session.imagePlayNonce}
+          imageStopNonce={session.imageStopNonce}
+          isImage={isImageQuestion(currentQuestion)}
+          showImagePlayer={isImageQuestion(currentQuestion)}
+        />
       </div>
     );
   }
 
-  const displayMode = session.displayMode;
-  const champion = session.players.find((p) => p.isChampion);
-  const challenger = session.players
-    .filter((p) => !p.isChampion && !p.eliminated)
-    .sort((a, b) => b.score - a.score)[0];
+  if (showTargetName && targetPlayer) {
+    return <TvPlayerFocus playerName={targetPlayer.name} />;
+  }
 
   return (
-    <div className="min-h-screen">
-      <GameBoard
-        questionText={currentQuestion.text}
-        category={currentQuestion.category}
-        options={currentQuestion.options}
-        correctAnswer={currentQuestion.correctAnswer}
-        displayMode={displayMode}
-        revealAnswer={session.revealAnswer}
-        leftScore={
-          session.currentRound === "FINALE" && session.finaleHidden
-            ? undefined
-            : challenger?.score
-        }
-        rightScore={
-          session.currentRound === "FINALE" && session.finaleHidden
-            ? undefined
-            : champion?.score
-        }
-        leftLabel={challenger?.name}
-        rightLabel={champion?.name ?? "Champion"}
-        audioUrl={getMusicalAudioUrl(currentQuestion)}
-        musicPlayNonce={session.musicPlayNonce}
-        musicStopNonce={session.musicStopNonce}
-        isMusical={isMusicalQuestion(currentQuestion)}
-        showMusicalPlayer={isMusicalQuestion(currentQuestion)}
-        videoUrl={getVideoUrl(currentQuestion)}
-        videoPlayNonce={session.videoPlayNonce}
-        videoStopNonce={session.videoStopNonce}
-        isVideo={isVideoQuestion(currentQuestion)}
-        showVideoPlayer={isVideoQuestion(currentQuestion)}
-        imageUrl={getImageUrl(currentQuestion)}
-        imagePlayNonce={session.imagePlayNonce}
-        imageStopNonce={session.imageStopNonce}
-        isImage={isImageQuestion(currentQuestion)}
-        showImagePlayer={isImageQuestion(currentQuestion)}
-      />
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-indigo-950 to-purple-950">
+      <p className="text-3xl font-bold text-amber-400 animate-pulse">
+        En attente…
+      </p>
     </div>
   );
 }

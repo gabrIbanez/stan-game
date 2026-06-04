@@ -7,7 +7,12 @@ export function isAdminUnlockedLocally(): boolean {
 
 export function setAdminUnlockedLocally() {
   sessionStorage.setItem(ADMIN_STORAGE_KEY, "1");
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("stan-admin-unlocked"));
+  }
 }
+
+export const ADMIN_UNLOCK_EVENT = "stan-admin-unlocked";
 
 export async function unlockAdmin(password: string): Promise<boolean> {
   const res = await fetch("/api/admin/unlock", {

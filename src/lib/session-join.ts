@@ -1,3 +1,5 @@
+import { getAppOrigin } from "@/lib/app-url";
+
 export const JOIN_PLAYER_STORAGE_PREFIX = "stan-game-join-";
 
 export type StoredJoinPlayer = {
@@ -26,6 +28,7 @@ export function storeJoinPlayer(sessionId: string, player: StoredJoinPlayer) {
 
 export function buildJoinUrl(sessionId: string, origin?: string) {
   const base =
-    origin ?? (typeof window !== "undefined" ? window.location.origin : "");
-  return `${base}/sessions/${sessionId}/join`;
+    origin ??
+    (typeof window !== "undefined" ? window.location.origin : getAppOrigin());
+  return `${base.replace(/\/$/, "")}/sessions/${sessionId}/join`;
 }

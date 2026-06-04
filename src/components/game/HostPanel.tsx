@@ -46,6 +46,8 @@ type HostPanelProps = {
   videoStopNonce: number;
   imagePlayNonce: number;
   imageStopNonce: number;
+  targetPlayerId: string | null;
+  showTargetPlayerOnTv: boolean;
   onSessionUpdate: () => void;
 };
 
@@ -69,6 +71,8 @@ export function HostPanel({
   registrationsOpen,
   showJoinQrOnScreen,
   sessionStatus,
+  targetPlayerId,
+  showTargetPlayerOnTv,
   onSessionUpdate,
 }: HostPanelProps) {
   const [historyKey, setHistoryKey] = useState(0);
@@ -361,6 +365,66 @@ export function HostPanel({
         </p>
       </section>
 
+      <section className="space-y-3 rounded-lg border border-amber-500/40 bg-amber-950/20 p-3">
+        <h3 className="font-semibold text-amber-200">Joueur interrogé (écran TV)</h3>
+        <p className="text-[10px] leading-snug text-violet-400">
+          Choisis qui répond, affiche son prénom quand tu veux, charge la question
+          séparément — tout est indépendant.
+        </p>
+        <div className="flex flex-wrap gap-1">
+          <button
+            type="button"
+            onClick={() =>
+              patchSession({ targetPlayerId: null, showTargetPlayerOnTv: false })
+            }
+            className={`rounded-lg px-2 py-1.5 text-xs ${
+              !targetPlayerId ? "bg-amber-500 text-black" : "bg-violet-800"
+            }`}
+          >
+            —
+          </button>
+          {activePlayers.map((player) => (
+            <button
+              key={player.id}
+              type="button"
+              onClick={() => patchSession({ targetPlayerId: player.id })}
+              className={`rounded-lg px-2 py-1.5 text-xs font-medium ${
+                targetPlayerId === player.id
+                  ? "bg-amber-500 text-black ring-2 ring-amber-200"
+                  : "bg-violet-800 hover:bg-violet-700"
+              }`}
+            >
+              {player.name}
+              {player.isChampion && " ★"}
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={!targetPlayerId}
+            onClick={() =>
+              patchSession({
+                showTargetPlayerOnTv: !showTargetPlayerOnTv,
+              })
+            }
+            className="flex-1 rounded-lg bg-fuchsia-700 py-2 text-xs font-bold text-white hover:bg-fuchsia-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            {showTargetPlayerOnTv
+              ? "Masquer le prénom sur TV"
+              : "Afficher le prénom sur TV"}
+          </button>
+        </div>
+        {targetPlayerId && (
+          <p className="text-xs text-amber-200/90">
+            Sélection :{" "}
+            <strong>{players.find((p) => p.id === targetPlayerId)?.name}</strong>
+            {showTargetPlayerOnTv ? " — visible sur l'écran TV" : ""}
+            {currentQuestionId ? " — la question peut s'afficher en plus" : ""}
+          </p>
+        )}
+      </section>
+
       <section className="space-y-2">
         <h3 className="font-semibold text-white">1. Charger une question</h3>
         <select
@@ -383,6 +447,21 @@ export function HostPanel({
           La question s&apos;affiche sans les réponses. Le participant annonce son
           mode.
         </p>
+        {currentQuestionId && (
+          <button
+            type="button"
+            onClick={() =>
+              patchSession({
+                currentQuestionId: null,
+                displayMode: null,
+                revealAnswer: false,
+              })
+            }
+            className="w-full rounded-lg border border-violet-600 py-1.5 text-xs text-violet-300 hover:bg-violet-900"
+          >
+            Retirer la question de l&apos;écran
+          </button>
+        )}
       </section>
 
       {currentQuestion && isMusicalQuestion(currentQuestion) && (
@@ -539,7 +618,11 @@ export function HostPanel({
         {activePlayers.map((player) => (
           <div
             key={player.id}
-            className="rounded-lg border border-violet-800 bg-violet-950/80 p-2"
+            className={`rounded-lg border p-2 ${
+              targetPlayerId === player.id
+                ? "border-amber-500/60 bg-amber-950/30"
+                : "border-violet-800 bg-violet-950/80"
+            }`}
           >
             <div className="mb-1 flex items-center justify-between">
               <span className="font-medium">

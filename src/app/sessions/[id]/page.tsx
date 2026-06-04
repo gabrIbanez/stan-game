@@ -80,6 +80,11 @@ export default function SessionPage() {
       ? undefined
       : champion?.score;
 
+  const targetPlayer = session.targetPlayerId
+    ? session.players.find((p) => p.id === session.targetPlayerId)
+    : null;
+  const showTargetOnTv = session.showTargetPlayerOnTv && targetPlayer;
+
   return (
     <AdminPasswordGate title="Pupitre présentateur">
     <div className="flex h-[calc(100vh-57px)] flex-col lg:flex-row">
@@ -123,6 +128,7 @@ export default function SessionPage() {
             correctAnswer={currentQuestion.correctAnswer}
             displayMode={displayMode}
             revealAnswer={session.revealAnswer}
+            targetPlayerName={showTargetOnTv ? targetPlayer.name : null}
             leftScore={leftScore}
             rightScore={rightScore}
             leftLabel={challenger?.name.slice(0, 6)}
@@ -178,6 +184,8 @@ export default function SessionPage() {
           registrationsOpen={session.registrationsOpen}
           showJoinQrOnScreen={session.showJoinQrOnScreen}
           sessionStatus={session.status}
+          targetPlayerId={session.targetPlayerId}
+          showTargetPlayerOnTv={session.showTargetPlayerOnTv}
           onSessionUpdate={refresh}
         />
       </div>

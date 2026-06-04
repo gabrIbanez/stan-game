@@ -32,6 +32,8 @@ type GameBoardProps = {
   isVideo?: boolean;
   showImagePlayer?: boolean;
   isImage?: boolean;
+  /** Prénom du joueur interrogé (affiché sur l'écran TV si le présentateur l'active). */
+  targetPlayerName?: string | null;
 };
 
 function AnswerPill({
@@ -79,6 +81,7 @@ export function GameBoard({
   isVideo = false,
   showImagePlayer = false,
   isImage = false,
+  targetPlayerName,
 }: GameBoardProps) {
   const modeChosen = displayMode !== null;
   const visibleOptions = displayMode
@@ -198,6 +201,17 @@ export function GameBoard({
               Bonne réponse : {correctAnswer}
             </p>
           )}
+        </div>
+      )}
+
+      {targetPlayerName && (
+        <div className="relative mx-auto mb-6 w-full max-w-3xl text-center">
+          <p className="text-lg font-semibold uppercase tracking-widest text-violet-300 md:text-xl">
+            Question pour
+          </p>
+          <p className="mt-2 text-4xl font-black text-amber-400 md:text-5xl">
+            {targetPlayerName}
+          </p>
         </div>
       )}
 

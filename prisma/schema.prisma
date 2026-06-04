@@ -88,6 +88,8 @@ model GameSession {
   imageStopNonce    Int           @default(0)
   registrationsOpen Boolean       @default(true)
   showJoinQrOnScreen Boolean      @default(false)
+  targetPlayerId    String?
+  showTargetPlayerOnTv Boolean   @default(false)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   players           GamePlayer[]

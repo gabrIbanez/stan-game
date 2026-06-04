@@ -26,6 +26,7 @@ Ne mets **pas** l’URL pooled dans `prisma migrate` : Neon + pooler provoquent 
 2. Va sur [vercel.com](https://vercel.com) → **Add New… → Project** → importe `stan-game`.
 3. **Environment variables** (Production) :
    - `DATABASE_URL` = l’URL Neon copiée à l’étape 1.
+   - `NEXT_PUBLIC_APP_URL` = l’URL Vercel de prod (ex. `https://stan-game-xxx.vercel.app`) — pour le QR dans les **vignettes** quand tu partages un lien (WhatsApp, iMessage, etc.).
 4. **Deploy** (le premier build peut échouer tant que Blob n’est pas créé — normal, continue à l’étape 3).
 
 ---
