@@ -22,6 +22,8 @@ enum AnswerMode {
 enum QuestionKind {
   TEXT
   MUSICAL
+  VIDEO
+  IMAGE
 }
 
 enum GameRound {
@@ -56,6 +58,8 @@ model Question {
   qualifSlot          Int?
   notes               String?
   audioUrl            String?
+  videoUrl            String?
+  imageUrl            String?
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 }
@@ -74,6 +78,10 @@ model GameSession {
   finaleHidden      Boolean       @default(true)
   musicPlayNonce    Int           @default(0)
   musicStopNonce    Int           @default(0)
+  videoPlayNonce    Int           @default(0)
+  videoStopNonce    Int           @default(0)
+  imagePlayNonce    Int           @default(0)
+  imageStopNonce    Int           @default(0)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   players           GamePlayer[]

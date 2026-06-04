@@ -2,7 +2,9 @@
 
 import type { AnswerMode } from "@/types/game";
 import { ANSWER_MODE_LABELS, optionsForMode } from "@/lib/game-rules";
+import { ImagePrompt } from "@/components/game/ImagePrompt";
 import { MusicalBlindTest } from "@/components/game/MusicalBlindTest";
+import { VideoPrompt } from "@/components/game/VideoPrompt";
 
 type GameBoardProps = {
   questionText: string;
@@ -16,10 +18,20 @@ type GameBoardProps = {
   leftLabel?: string;
   rightLabel?: string;
   audioUrl?: string | null;
+  videoUrl?: string | null;
+  imageUrl?: string | null;
   musicPlayNonce?: number;
   musicStopNonce?: number;
+  videoPlayNonce?: number;
+  videoStopNonce?: number;
+  imagePlayNonce?: number;
+  imageStopNonce?: number;
   showMusicalPlayer?: boolean;
   isMusical?: boolean;
+  showVideoPlayer?: boolean;
+  isVideo?: boolean;
+  showImagePlayer?: boolean;
+  isImage?: boolean;
 };
 
 function AnswerPill({
@@ -53,10 +65,20 @@ export function GameBoard({
   leftLabel,
   rightLabel,
   audioUrl,
+  videoUrl,
+  imageUrl,
   musicPlayNonce = 0,
   musicStopNonce = 0,
+  videoPlayNonce = 0,
+  videoStopNonce = 0,
+  imagePlayNonce = 0,
+  imageStopNonce = 0,
   showMusicalPlayer = false,
   isMusical = false,
+  showVideoPlayer = false,
+  isVideo = false,
+  showImagePlayer = false,
+  isImage = false,
 }: GameBoardProps) {
   const modeChosen = displayMode !== null;
   const visibleOptions = displayMode
@@ -85,15 +107,23 @@ export function GameBoard({
         />
       )}
 
-      {isMusical && !showMusicalPlayer && (
-        <div className="relative z-10 mx-auto mb-6 max-w-lg rounded-2xl border-2 border-fuchsia-400/50 bg-fuchsia-950/40 px-6 py-4 text-center">
-          <p className="text-2xl">🎵</p>
-          <p className="font-bold text-fuchsia-200">Blind test — écran TV</p>
-          <p className="text-sm text-violet-300">Lance l&apos;extrait depuis le pupitre.</p>
-        </div>
+      {showVideoPlayer && isVideo && videoUrl && (
+        <VideoPrompt
+          videoUrl={videoUrl}
+          playNonce={videoPlayNonce}
+          stopNonce={videoStopNonce}
+        />
       )}
 
-      {!modeChosen && !isMusical && (
+      {showImagePlayer && isImage && imageUrl && (
+        <ImagePrompt
+          imageUrl={imageUrl}
+          playNonce={imagePlayNonce}
+          stopNonce={imageStopNonce}
+        />
+      )}
+
+      {!modeChosen && !isMusical && !isVideo && !isImage && (
         <div className="relative mx-auto mb-8 max-w-2xl animate-pulse rounded-3xl border-4 border-dashed border-amber-400/60 bg-violet-950/40 px-8 py-10 text-center">
           <p className="text-2xl font-bold text-amber-300">
             Le participant choisit son mode

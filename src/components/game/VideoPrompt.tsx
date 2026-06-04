@@ -3,34 +3,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TV_MEDIA_UNLOCK_KEY } from "@/lib/constants";
 
-type MusicalBlindTestProps = {
-  audioUrl: string;
+type VideoPromptProps = {
+  videoUrl: string;
   playNonce: number;
   stopNonce: number;
 };
 
-function PlayingVisual() {
-  return (
-    <div className="pointer-events-none rounded-3xl border-4 border-fuchsia-400 bg-gradient-to-b from-fuchsia-800/90 to-violet-900/90 px-8 py-14 text-center shadow-2xl">
-      <div className="mx-auto mb-6 flex items-end justify-center gap-1.5">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <span
-            key={i}
-            className="inline-block w-2 animate-pulse rounded-full bg-fuchsia-300"
-            style={{
-              height: `${20 + (i % 3) * 16}px`,
-              animationDelay: `${i * 0.12}s`,
-            }}
-          />
-        ))}
-      </div>
-      <p className="text-3xl font-black text-white">Extrait en cours</p>
-      <p className="mt-2 text-violet-200">Écoutez bien…</p>
-    </div>
-  );
-}
-
-function waitForCanPlay(el: HTMLAudioElement) {
+function waitForCanPlay(el: HTMLVideoElement) {
   if (el.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) return Promise.resolve();
   return new Promise<void>((resolve) => {
     const done = () => {
@@ -42,16 +21,17 @@ function waitForCanPlay(el: HTMLAudioElement) {
 }
 
 /**
- * Précharge le MP3 en arrière-plan. Rien à l'écran tant que le présentateur ne lance pas.
+ * Précharge en arrière-plan. Lecture uniquement via playNonce (pupitre).
+ * La balise vidéo ignore les clics — pas de play/pause par le public.
  */
-export function MusicalBlindTest({
-  audioUrl,
+export function VideoPrompt({
+  videoUrl,
   playNonce,
   stopNonce,
-}: MusicalBlindTestProps) {
-  const audioRef = useRef<HTMLAudioElement>(null);
+}: VideoPromptProps) {
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [visible, setVisible] = useState(false);
-  const [needsStaffTap, setNeedsStaffTap] = useState(false);
+  const [playingMuted, setPlayingMuted] = useState(false);
   const [soundUnlocked, setSoundUnlocked] = useState(false);
 
   useEffect(() => {
@@ -61,27 +41,28 @@ export function MusicalBlindTest({
   }, []);
 
   const resetPreload = useCallback(() => {
-    const el = audioRef.current;
+    const el = videoRef.current;
     if (!el) return;
     setVisible(false);
-    setNeedsStaffTap(false);
+    setPlayingMuted(false);
     el.pause();
-    el.currentTime = 0;
-    el.src = audioUrl;
+    el.muted = true;
+    el.src = videoUrl;
     el.load();
-  }, [audioUrl]);
+  }, [videoUrl]);
 
   useEffect(() => {
     resetPreload();
   }, [resetPreload]);
 
   const hide = useCallback(() => {
-    const el = audioRef.current;
+    const el = videoRef.current;
     if (!el) return;
     el.pause();
     el.currentTime = 0;
+    el.muted = true;
     setVisible(false);
-    setNeedsStaffTap(false);
+    setPlayingMuted(false);
   }, []);
 
   useEffect(() => {
@@ -90,7 +71,7 @@ export function MusicalBlindTest({
   }, [stopNonce, hide]);
 
   const startFromHost = useCallback(async () => {
-    const el = audioRef.current;
+    const el = videoRef.current;
     if (!el) return;
 
     setVisible(true);
@@ -98,20 +79,23 @@ export function MusicalBlindTest({
     await waitForCanPlay(el);
 
     if (soundUnlocked) {
+      el.muted = false;
       try {
         await el.play();
-        setNeedsStaffTap(false);
+        setPlayingMuted(false);
         return;
       } catch {
-        /* repli ci-dessous */
+        /* repli muet ci-dessous */
       }
     }
 
+    el.muted = true;
     try {
       await el.play();
-      setNeedsStaffTap(false);
+      setPlayingMuted(true);
     } catch {
-      setNeedsStaffTap(true);
+      setPlayingMuted(false);
+      setVisible(false);
     }
   }, [soundUnlocked]);
 
@@ -121,34 +105,37 @@ export function MusicalBlindTest({
   }, [playNonce, startFromHost]);
 
   async function enableSound() {
-    const el = audioRef.current;
+    const el = videoRef.current;
     if (!el || !visible) return;
     setSoundUnlocked(true);
     sessionStorage.setItem(TV_MEDIA_UNLOCK_KEY, "1");
+    el.muted = false;
     try {
       await el.play();
-      setNeedsStaffTap(false);
+      setPlayingMuted(false);
     } catch {
-      setNeedsStaffTap(true);
+      setPlayingMuted(true);
     }
   }
 
   return (
     <>
-      <audio
-        ref={audioRef}
+      <video
+        ref={videoRef}
         preload="auto"
-        className="pointer-events-none fixed left-0 top-0 h-px w-px opacity-0"
+        playsInline
+        disablePictureInPicture
+        controls={false}
+        tabIndex={-1}
+        className={
+          visible
+            ? "pointer-events-none relative z-10 mx-auto mb-8 block aspect-video w-full max-w-5xl rounded-3xl border-4 border-indigo-400 bg-black shadow-2xl"
+            : "pointer-events-none fixed left-0 top-0 h-px w-px opacity-0"
+        }
         onEnded={() => hide()}
       />
 
-      {visible && (
-        <div className="relative z-10 mx-auto mb-8 w-full max-w-2xl">
-          <PlayingVisual />
-        </div>
-      )}
-
-      {needsStaffTap && visible && (
+      {playingMuted && visible && (
         <button
           type="button"
           onClick={enableSound}
@@ -156,7 +143,7 @@ export function MusicalBlindTest({
         >
           Activer le son (staff — écran TV)
           <span className="mt-1 block text-sm font-normal text-amber-100">
-            L&apos;extrait est déjà lancé par le présentateur
+            La vidéo est déjà lancée par le présentateur
           </span>
         </button>
       )}

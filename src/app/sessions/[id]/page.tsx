@@ -7,7 +7,14 @@ import { GameBoard } from "@/components/game/GameBoard";
 import { HostPanel } from "@/components/game/HostPanel";
 import { SessionToolbar } from "@/components/game/SessionToolbar";
 import { ROUND_LABELS } from "@/lib/game-rules";
-import { getMusicalAudioUrl, isMusicalQuestion } from "@/lib/question-utils";
+import {
+  getImageUrl,
+  getMusicalAudioUrl,
+  getVideoUrl,
+  isImageQuestion,
+  isMusicalQuestion,
+  isVideoQuestion,
+} from "@/lib/question-utils";
 
 type SessionWithPlayers = GameSession & {
   players: GamePlayer[];
@@ -118,10 +125,20 @@ export default function SessionPage() {
             leftLabel={challenger?.name.slice(0, 6)}
             rightLabel={champion?.name.slice(0, 6) ?? "Champ"}
             audioUrl={getMusicalAudioUrl(currentQuestion)}
+            videoUrl={getVideoUrl(currentQuestion)}
             musicPlayNonce={session.musicPlayNonce}
             musicStopNonce={session.musicStopNonce}
+            videoPlayNonce={session.videoPlayNonce}
+            videoStopNonce={session.videoStopNonce}
             isMusical={isMusicalQuestion(currentQuestion)}
             showMusicalPlayer={false}
+            isVideo={isVideoQuestion(currentQuestion)}
+            showVideoPlayer={false}
+            imageUrl={getImageUrl(currentQuestion)}
+            imagePlayNonce={session.imagePlayNonce}
+            imageStopNonce={session.imageStopNonce}
+            isImage={isImageQuestion(currentQuestion)}
+            showImagePlayer={false}
           />
         ) : (
           <div className="flex flex-1 items-center justify-center bg-gradient-to-b from-indigo-950 to-purple-950 p-8 text-center">
@@ -151,6 +168,10 @@ export default function SessionPage() {
           finaleHidden={session.finaleHidden}
           musicPlayNonce={session.musicPlayNonce}
           musicStopNonce={session.musicStopNonce}
+          videoPlayNonce={session.videoPlayNonce}
+          videoStopNonce={session.videoStopNonce}
+          imagePlayNonce={session.imagePlayNonce}
+          imageStopNonce={session.imageStopNonce}
           onSessionUpdate={refresh}
         />
       </div>

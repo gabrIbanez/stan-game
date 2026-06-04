@@ -1,0 +1,14 @@
+-- AlterTable
+ALTER TABLE "Question" ADD COLUMN IF NOT EXISTS "videoUrl" TEXT;
+
+-- AlterTable
+ALTER TABLE "GameSession" ADD COLUMN IF NOT EXISTS "videoPlayNonce" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "GameSession" ADD COLUMN IF NOT EXISTS "videoStopNonce" INTEGER NOT NULL DEFAULT 0;
+
+-- AddEnumValue
+DO $$ BEGIN
+  ALTER TYPE "QuestionKind" ADD VALUE IF NOT EXISTS 'VIDEO';
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;
+

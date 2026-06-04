@@ -4,7 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import type { GameSession, GamePlayer, Question } from "@/types/game";
 import { GameBoard } from "@/components/game/GameBoard";
-import { getMusicalAudioUrl, isMusicalQuestion } from "@/lib/question-utils";
+import {
+  getImageUrl,
+  getMusicalAudioUrl,
+  getVideoUrl,
+  isImageQuestion,
+  isMusicalQuestion,
+  isVideoQuestion,
+} from "@/lib/question-utils";
 
 type SessionWithPlayers = GameSession & {
   players: GamePlayer[];
@@ -30,7 +37,7 @@ export default function EcranPage() {
 
   useEffect(() => {
     refresh();
-    const interval = setInterval(refresh, 800);
+    const interval = setInterval(refresh, 500);
     return () => clearInterval(interval);
   }, [refresh]);
 
@@ -77,6 +84,16 @@ export default function EcranPage() {
         musicStopNonce={session.musicStopNonce}
         isMusical={isMusicalQuestion(currentQuestion)}
         showMusicalPlayer={isMusicalQuestion(currentQuestion)}
+        videoUrl={getVideoUrl(currentQuestion)}
+        videoPlayNonce={session.videoPlayNonce}
+        videoStopNonce={session.videoStopNonce}
+        isVideo={isVideoQuestion(currentQuestion)}
+        showVideoPlayer={isVideoQuestion(currentQuestion)}
+        imageUrl={getImageUrl(currentQuestion)}
+        imagePlayNonce={session.imagePlayNonce}
+        imageStopNonce={session.imageStopNonce}
+        isImage={isImageQuestion(currentQuestion)}
+        showImagePlayer={isImageQuestion(currentQuestion)}
       />
     </div>
   );
