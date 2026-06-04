@@ -12,9 +12,11 @@ Temps estimé : **~10 minutes**, une seule fois.
 
 1. Va sur [neon.tech](https://neon.tech) → compte gratuit.
 2. **New project** → région proche de toi (ex. `eu-central-1`).
-3. Onglet **Connection string** → copie l’URL **pooled** (avec `?sslmode=require`).
+3. Onglet **Connection string** :
+   - **Pooled** (host `…-pooler.…`) → `DATABASE_URL` sur Vercel
+   - **Direct** (sans `pooler`) → garde-la pour les migrations en local (`DIRECT_URL` dans `.env`)
 
-Tu la colleras plus tard dans Vercel comme `DATABASE_URL`.
+Ne mets **pas** l’URL pooled dans `prisma migrate` : Neon + pooler provoquent l’erreur `P1002` (timeout verrou).
 
 ---
 
@@ -38,15 +40,21 @@ Les uploads en prod passent par le navigateur → Blob (pas de limite 4,5 Mo cô
 
 ---
 
-## 4. Migrations & seed (optionnel)
+## 4. Migrations & seed (une fois)
 
-Au premier déploiement, `vercel-build` lance déjà `prisma migrate deploy`.
-
-Pour des questions de démo, en local avec la **même** `DATABASE_URL` Neon :
+Les migrations **ne tournent pas** pendant le build Vercel (évite `P1002` sur le pooler Neon).
+Lance-les **depuis ton Mac** après chaque changement de schéma :
 
 ```bash
-# dans .env
-DATABASE_URL="postgresql://..."
+# .env : DATABASE_URL = pooled (app), DIRECT_URL = direct (migrations Neon)
+npm run db:migrate:deploy
+```
+
+Si tu n’as qu’une seule URL Neon, utilise la connexion **direct** (sans `-pooler`) pour cette commande.
+
+Seed des questions de démo (optionnel) :
+
+```bash
 npm run db:seed
 ```
 

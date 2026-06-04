@@ -10,5 +10,9 @@ export default defineConfig({
   },
   datasource: {
     url: process.env["DATABASE_URL"],
+    // Connexion directe Neon (sans pooler) : requise pour `prisma migrate` (verrous advisory).
+    ...(process.env["DIRECT_URL"]
+      ? { directUrl: process.env["DIRECT_URL"] }
+      : {}),
   },
 });
