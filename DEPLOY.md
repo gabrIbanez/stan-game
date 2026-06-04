@@ -46,6 +46,8 @@ Les uploads en prod passent par le navigateur → Blob (pas de limite 4,5 Mo cô
 Les migrations **ne tournent pas** pendant le build Vercel (évite `P1002` sur le pooler Neon).
 Lance-les **depuis ton Mac** après chaque changement de schéma :
 
+> **Symptôme** : création de partie ou pupitre en 500, console `Unexpected end of JSON input` → la base prod n’a pas les dernières colonnes. Corrige avec la commande ci-dessous **avant** de retester l’app.
+
 ```bash
 # .env : DATABASE_URL = pooled (app), DIRECT_URL = direct (migrations Neon)
 npm run db:migrate:deploy

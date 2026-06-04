@@ -49,13 +49,13 @@ export default function NewSessionPage() {
     });
 
     setLoading(false);
+    const data = (await res.json().catch(() => ({}))) as { error?: string };
     if (!res.ok) {
-      const data = await res.json();
       setError(data.error ?? "Impossible de créer la partie.");
       return;
     }
 
-    const session = await res.json();
+    const session = data as { id: string };
     router.push(`/sessions/${session.id}`);
   }
 

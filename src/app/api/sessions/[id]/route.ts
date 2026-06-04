@@ -1,31 +1,37 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { prismaRouteErrorResponse } from "@/lib/prisma-api-error";
 import type { AnswerMode, CompetWave, GameRound, SessionStatus } from "@/types/game";
 
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_request: Request, { params }: Params) {
   const { id } = await params;
-  const session = await prisma.gameSession.findUnique({
-    where: { id },
-    include: {
-      players: { orderBy: { orderIndex: "asc" } },
-      responses: { orderBy: { createdAt: "asc" } },
-    },
-  });
-  if (!session) {
-    return NextResponse.json({ error: "Partie introuvable." }, { status: 404 });
+  try {
+    const session = await prisma.gameSession.findUnique({
+      where: { id },
+      include: {
+        players: { orderBy: { orderIndex: "asc" } },
+        responses: { orderBy: { createdAt: "asc" } },
+      },
+    });
+    if (!session) {
+      return NextResponse.json({ error: "Partie introuvable." }, { status: 404 });
+    }
+    return NextResponse.json(session);
+  } catch (err) {
+    return prismaRouteErrorResponse("GET /api/sessions/[id]", err);
   }
-  return NextResponse.json(session);
 }
 
 export async function PATCH(request: Request, { params }: Params) {
   const { id } = await params;
   const body = await request.json();
 
-  const session = await prisma.gameSession.update({
-    where: { id },
-    data: {
+  try {
+    const session = await prisma.gameSession.update({
+      where: { id },
+      data: {
       ...(body.status !== undefined && { status: body.status as SessionStatus }),
       ...(body.currentRound !== undefined && {
         currentRound: body.currentRound as GameRound,
@@ -81,10 +87,13 @@ export async function PATCH(request: Request, { params }: Params) {
         showTargetPlayerOnTv: body.showTargetPlayerOnTv,
       }),
     },
-    include: {
-      players: { orderBy: { orderIndex: "asc" } },
-    },
-  });
+      include: {
+        players: { orderBy: { orderIndex: "asc" } },
+      },
+    });
 
-  return NextResponse.json(session);
+    return NextResponse.json(session);
+  } catch (err) {
+    return prismaRouteErrorResponse("PATCH /api/sessions/[id]", err);
+  }
 }

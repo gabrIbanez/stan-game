@@ -1,17 +1,22 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { isDuplicatePlayerName, normalizePlayerName } from "@/lib/player-name";
+import { normalizePlayerName } from "@/lib/player-name";
+import { prismaRouteErrorResponse } from "@/lib/prisma-api-error";
 
 export async function GET() {
-  const sessions = await prisma.gameSession.findMany({
-    include: {
-      players: { orderBy: { orderIndex: "asc" } },
-      _count: { select: { players: true } },
-    },
-    orderBy: { createdAt: "desc" },
-    take: 50,
-  });
-  return NextResponse.json(sessions);
+  try {
+    const sessions = await prisma.gameSession.findMany({
+      include: {
+        players: { orderBy: { orderIndex: "asc" } },
+        _count: { select: { players: true } },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 50,
+    });
+    return NextResponse.json(sessions);
+  } catch (err) {
+    return prismaRouteErrorResponse("GET /api/sessions", err);
+  }
 }
 
 export async function POST(request: Request) {
@@ -47,27 +52,31 @@ export async function POST(request: Request) {
     );
   }
 
-  const session = await prisma.gameSession.create({
-    data: {
-      championName: championName?.trim() || null,
-      competTheme: competTheme?.trim() || null,
-      status: qrMode && !playerNames.length ? "SETUP" : "IN_PROGRESS",
-      registrationsOpen: true,
-      showJoinQrOnScreen: qrMode,
-      players: {
-        create: playerNames.map((name, index) => ({
-          name,
-          orderIndex: index,
-          isChampion: championName
-            ? normalizePlayerName(name) === normalizePlayerName(championName)
-            : false,
-        })),
+  try {
+    const session = await prisma.gameSession.create({
+      data: {
+        championName: championName?.trim() || null,
+        competTheme: competTheme?.trim() || null,
+        status: qrMode && !playerNames.length ? "SETUP" : "IN_PROGRESS",
+        registrationsOpen: true,
+        showJoinQrOnScreen: qrMode,
+        players: {
+          create: playerNames.map((name, index) => ({
+            name,
+            orderIndex: index,
+            isChampion: championName
+              ? normalizePlayerName(name) === normalizePlayerName(championName)
+              : false,
+          })),
+        },
       },
-    },
-    include: {
-      players: { orderBy: { orderIndex: "asc" } },
-    },
-  });
+      include: {
+        players: { orderBy: { orderIndex: "asc" } },
+      },
+    });
 
-  return NextResponse.json(session, { status: 201 });
+    return NextResponse.json(session, { status: 201 });
+  } catch (err) {
+    return prismaRouteErrorResponse("POST /api/sessions", err);
+  }
 }
