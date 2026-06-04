@@ -7,39 +7,17 @@ import {
   QUESTION_KIND_OPTIONS,
   QUESTION_ROUND_OPTIONS,
 } from "@/lib/constants";
+import {
+  uploadImage,
+  uploadMp3,
+  uploadVideo,
+} from "@/lib/media-upload-client";
 
 type QuestionFormProps = {
   initial?: Question;
   onSaved: () => void;
   onCancel?: () => void;
 };
-
-async function uploadMp3(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await fetch("/api/audio/upload", { method: "POST", body: formData });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? "Échec de l'upload.");
-  return data.url as string;
-}
-
-async function uploadVideo(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await fetch("/api/video/upload", { method: "POST", body: formData });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? "Échec de l'upload vidéo.");
-  return data.url as string;
-}
-
-async function uploadImage(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("file", file);
-  const res = await fetch("/api/image/upload", { method: "POST", body: formData });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error ?? "Échec de l'upload image.");
-  return data.url as string;
-}
 
 export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) {
   const [kind, setKind] = useState<QuestionKind>(initial?.kind ?? "TEXT");
