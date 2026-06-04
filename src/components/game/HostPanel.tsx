@@ -121,6 +121,25 @@ export function HostPanel({
     await patchSession({ imageStopNonce: imageStopNonce + 1 });
   }
 
+  async function removePlayer(playerId: string, playerName: string) {
+    if (
+      !confirm(
+        `Retirer « ${playerName} » de la partie ? Ses réponses et questions associées seront supprimées.`,
+      )
+    ) {
+      return;
+    }
+    const res = await fetch(`/api/sessions/${sessionId}/players/${playerId}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) {
+      const data = await res.json();
+      alert(data.error ?? "Impossible de retirer ce participant.");
+      return;
+    }
+    onSessionUpdate();
+  }
+
   async function setParticipantMode(mode: AnswerMode) {
     await patchSession({ displayMode: mode, revealAnswer: false });
   }
@@ -178,6 +197,38 @@ export function HostPanel({
           <p className="text-xs text-violet-400">Vague : {competWave}</p>
         )}
       </div>
+
+      <section className="space-y-2 rounded-lg border border-violet-700/60 bg-violet-950/40 p-3">
+        <h3 className="font-semibold text-white">Participants ({players.length})</h3>
+        <p className="text-[10px] text-violet-500">Un seul prénom par personne (insensible à la casse).</p>
+        <ul className="space-y-1">
+          {players.map((player) => (
+            <li
+              key={player.id}
+              className="flex items-center justify-between gap-2 rounded-lg bg-violet-900/60 px-2 py-1.5"
+            >
+              <span className="truncate text-sm">
+                {player.name}
+                {player.isChampion && " ★"}
+                {player.joinedViaQr && (
+                  <span className="ml-1 text-[10px] text-cyan-400">QR</span>
+                )}
+              </span>
+              <button
+                type="button"
+                onClick={() => removePlayer(player.id, player.name)}
+                className="shrink-0 rounded px-2 py-0.5 text-xs font-bold text-red-400 hover:bg-red-950"
+                title="Retirer du jeu"
+              >
+                Retirer
+              </button>
+            </li>
+          ))}
+        </ul>
+        {players.length === 0 && (
+          <p className="text-xs text-violet-400">Aucun inscrit pour l&apos;instant.</p>
+        )}
+      </section>
 
       <section className="space-y-2">
         <h3 className="font-semibold text-white">Manche</h3>

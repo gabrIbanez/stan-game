@@ -99,9 +99,12 @@ export default function JoinSessionPage() {
               maxLength={40}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ton prénom"
+              placeholder="Ton prénom (unique sur la partie)"
               className="w-full rounded-xl border border-violet-600 bg-violet-950 px-4 py-3 text-lg"
             />
+            <p className="text-center text-xs text-violet-500">
+              Un seul compte par prénom — pas de doublon avec les autres.
+            </p>
             {error && <p className="text-center text-red-400">{error}</p>}
             <button
               type="submit"

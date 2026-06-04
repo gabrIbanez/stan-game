@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isDuplicatePlayerName, normalizePlayerName } from "@/lib/player-name";
 
 export async function GET() {
   const sessions = await prisma.gameSession.findMany({
@@ -22,8 +23,22 @@ export async function POST(request: Request) {
     useQrRegistration?: boolean;
   };
 
-  const playerNames = (players ?? []).map((n) => n.trim()).filter(Boolean);
+  const playerNames = (players ?? [])
+    .map((n) => n.trim().replace(/\s+/g, " "))
+    .filter(Boolean);
   const qrMode = Boolean(useQrRegistration);
+
+  const seen = new Set<string>();
+  for (const name of playerNames) {
+    const key = normalizePlayerName(name);
+    if (seen.has(key)) {
+      return NextResponse.json(
+        { error: `Le prénom « ${name} » est en double dans la liste.` },
+        { status: 400 },
+      );
+    }
+    seen.add(key);
+  }
 
   if (!playerNames.length && !qrMode) {
     return NextResponse.json(
@@ -44,7 +59,7 @@ export async function POST(request: Request) {
           name,
           orderIndex: index,
           isChampion: championName
-            ? name.toLowerCase() === championName.trim().toLowerCase()
+            ? normalizePlayerName(name) === normalizePlayerName(championName)
             : false,
         })),
       },

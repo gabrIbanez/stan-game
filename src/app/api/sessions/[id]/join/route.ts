@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { isDuplicatePlayerName, normalizePlayerName } from "@/lib/player-name";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -66,25 +67,28 @@ export async function POST(request: Request, { params }: Params) {
     );
   }
 
-  const normalized = name.toLowerCase();
-  const duplicate = session.players.some(
-    (p) => p.name.trim().toLowerCase() === normalized,
-  );
-  if (duplicate) {
+  if (
+    isDuplicatePlayerName(
+      name,
+      session.players.map((p) => p.name),
+    )
+  ) {
     return NextResponse.json(
-      { error: "Ce prénom est déjà pris sur cette partie." },
+      { error: "Ce prénom est déjà inscrit sur cette partie (un seul par personne)." },
       { status: 409 },
     );
   }
 
+  const normalized = normalizePlayerName(name);
+
   const player = await prisma.gamePlayer.create({
     data: {
       sessionId: id,
-      name,
+      name: name.trim().replace(/\s+/g, " "),
       orderIndex: session.players.length,
       joinedViaQr: true,
       isChampion: session.championName
-        ? session.championName.trim().toLowerCase() === normalized
+        ? normalizePlayerName(session.championName) === normalized
         : false,
     },
   });
