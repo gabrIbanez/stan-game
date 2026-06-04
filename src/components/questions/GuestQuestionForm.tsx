@@ -253,7 +253,7 @@ export function GuestQuestionForm({
       </button>
 
       <a
-        href={`/sessions/${sessionId}/ecran`}
+        href={`/sessions/${sessionId}/ecran?player=${encodeURIComponent(playerName)}`}
         target="_blank"
         rel="noopener noreferrer"
         className="block w-full rounded-xl border-2 border-fuchsia-500 bg-fuchsia-950/40 py-3 text-center font-bold text-fuchsia-200 hover:bg-fuchsia-900/50"

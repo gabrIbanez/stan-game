@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
+import { ParticipantWelcomeBanner } from "@/components/game/ParticipantWelcomeBanner";
+import { getStoredJoinPlayer } from "@/lib/session-join";
 import type { GameSession, GamePlayer, Question } from "@/types/game";
 import { GameBoard } from "@/components/game/GameBoard";
 import { JoinQrDisplay } from "@/components/game/JoinQrDisplay";
@@ -20,9 +22,21 @@ type SessionWithPlayers = GameSession & {
 
 export default function EcranPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const id = params.id as string;
   const [session, setSession] = useState<SessionWithPlayers | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [viewerName, setViewerName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fromUrl = searchParams.get("player")?.trim();
+    if (fromUrl) {
+      setViewerName(fromUrl);
+      return;
+    }
+    const stored = getStoredJoinPlayer(id);
+    setViewerName(stored?.name ?? null);
+  }, [id, searchParams]);
 
   const refresh = useCallback(async () => {
     const sRes = await fetch(`/api/sessions/${id}`);
@@ -57,6 +71,7 @@ export default function EcranPage() {
   if (showQr) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-indigo-950 via-purple-950 to-indigo-950 py-12">
+        {viewerName && <ParticipantWelcomeBanner name={viewerName} size="tv" />}
         <JoinQrDisplay
           sessionId={id}
           playerCount={session.players.length}
