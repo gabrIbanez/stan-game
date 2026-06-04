@@ -15,3 +15,11 @@ export function isVideoQuestion(question: Pick<Question, "kind" | "videoUrl">) {
 export function getVideoUrl(question: Pick<Question, "videoUrl">) {
   return question.videoUrl?.trim() || null;
 }
+
+export function isImageQuestion(question: Pick<Question, "kind" | "imageUrl">) {
+  return question.kind === "IMAGE" && Boolean(question.imageUrl);
+}
+
+export function getImageUrl(question: Pick<Question, "imageUrl">) {
+  return question.imageUrl?.trim() || null;
+}

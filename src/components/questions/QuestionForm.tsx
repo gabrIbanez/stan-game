@@ -32,6 +32,15 @@ async function uploadVideo(file: File): Promise<string> {
   return data.url as string;
 }
 
+async function uploadImage(file: File): Promise<string> {
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch("/api/image/upload", { method: "POST", body: formData });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error ?? "Échec de l'upload image.");
+  return data.url as string;
+}
+
 export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) {
   const [kind, setKind] = useState<QuestionKind>(initial?.kind ?? "TEXT");
   const [text, setText] = useState(initial?.text ?? "");
@@ -50,14 +59,17 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
   );
   const [audioUrl, setAudioUrl] = useState(initial?.audioUrl ?? "");
   const [videoUrl, setVideoUrl] = useState(initial?.videoUrl ?? "");
+  const [imageUrl, setImageUrl] = useState(initial?.imageUrl ?? "");
   const [mp3File, setMp3File] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const optionCount = answerMode === "DUO" ? 2 : answerMode === "CARRE" ? 4 : 0;
   const isMusical = kind === "MUSICAL";
   const isVideo = kind === "VIDEO";
+  const isImage = kind === "IMAGE";
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -67,6 +79,7 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
     try {
       let finalAudioUrl = audioUrl;
       let finalVideoUrl = videoUrl;
+      let finalImageUrl = imageUrl;
 
       if (isMusical) {
         if (mp3File) {
@@ -88,6 +101,16 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
         }
       }
 
+      if (isImage) {
+        if (imageFile) {
+          finalImageUrl = await uploadImage(imageFile);
+        } else if (!finalImageUrl) {
+          setError("Choisissez une image (JPEG, PNG ou WebP).");
+          setLoading(false);
+          return;
+        }
+      }
+
       const payload = {
         kind,
         text,
@@ -100,6 +123,7 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
         qualifSlot: qualifSlot ? Number(qualifSlot) : undefined,
         audioUrl: isMusical ? finalAudioUrl : undefined,
         videoUrl: isVideo ? finalVideoUrl : undefined,
+        imageUrl: isImage ? finalImageUrl : undefined,
       };
 
       const url = initial ? `/api/questions/${initial.id}` : "/api/questions";
@@ -168,8 +192,8 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
         <div className="space-y-3 rounded-xl border border-indigo-500/40 bg-indigo-950/30 p-4">
           <p className="text-sm font-semibold text-indigo-200">Fichier vidéo</p>
           <p className="text-xs text-violet-400">
-            Donnez une vidéo unique (pas de timecode). L'écran TV jouera la vidéo quand
-            vous lancerez depuis le pupitre.
+            Donnez une vidéo unique (pas de timecode). L&apos;écran TV affichera la vidéo
+            quand vous lancerez depuis le pupitre.
           </p>
           <input
             type="file"
@@ -186,9 +210,31 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
         </div>
       )}
 
+      {isImage && (
+        <div className="space-y-3 rounded-xl border border-emerald-500/40 bg-emerald-950/30 p-4">
+          <p className="text-sm font-semibold text-emerald-200">Fichier image</p>
+          <p className="text-xs text-violet-400">
+            L&apos;écran TV affichera l&apos;image quand vous l&apos;afficherez depuis le
+            pupitre (préchargement en arrière-plan).
+          </p>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+            onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+            className="w-full text-sm text-violet-200 file:mr-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:px-4 file:py-2 file:font-bold file:text-white"
+          />
+          {imageUrl && !imageFile && (
+            <p className="text-xs text-lime-400">
+              Image actuelle : {imageUrl.split("/").pop()}
+              {" — laissez vide pour la conserver, ou choisissez une nouvelle image."}
+            </p>
+          )}
+        </div>
+      )}
+
       <div>
         <label className="mb-1 block text-sm text-violet-300">
-          {isMusical || isVideo ? "Consigne affichée" : "Question"}
+          {isMusical || isVideo || isImage ? "Consigne affichée" : "Question"}
         </label>
         <textarea
           required
@@ -200,7 +246,9 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
               ? "Quel est ce titre ? Quel est cet artiste ?"
               : isVideo
                 ? "Que se passe-t-il dans cette vidéo ?"
-                : undefined
+                : isImage
+                  ? "Que représente cette image ?"
+                  : undefined
           }
           className="w-full rounded-lg border border-violet-700 bg-violet-950 px-3 py-2"
         />
@@ -212,7 +260,15 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
             required
             value={category}
             onChange={(e) => setCategory(e.target.value.toUpperCase())}
-            placeholder={isMusical ? "BLIND TEST" : isVideo ? "VIDÉO" : "NOBEL DE LA PAIX"}
+            placeholder={
+              isMusical
+                ? "BLIND TEST"
+                : isVideo
+                  ? "VIDÉO"
+                  : isImage
+                    ? "IMAGE"
+                    : "NOBEL DE LA PAIX"
+            }
             className="w-full rounded-lg border border-violet-700 bg-violet-950 px-3 py-2"
           />
         </div>

@@ -4,7 +4,11 @@ import { useState } from "react";
 import type { AnswerMode, GameRound, Question } from "@/types/game";
 import { ANSWER_MODE_LABELS, ROUND_LABELS } from "@/lib/game-rules";
 import { ResponseHistory } from "@/components/game/ResponseHistory";
-import { isMusicalQuestion, isVideoQuestion } from "@/lib/question-utils";
+import {
+  isImageQuestion,
+  isMusicalQuestion,
+  isVideoQuestion,
+} from "@/lib/question-utils";
 
 type Player = {
   id: string;
@@ -30,6 +34,8 @@ type HostPanelProps = {
   musicStopNonce: number;
   videoPlayNonce: number;
   videoStopNonce: number;
+  imagePlayNonce: number;
+  imageStopNonce: number;
   onSessionUpdate: () => void;
 };
 
@@ -48,6 +54,8 @@ export function HostPanel({
   musicStopNonce,
   videoPlayNonce,
   videoStopNonce,
+  imagePlayNonce,
+  imageStopNonce,
   onSessionUpdate,
 }: HostPanelProps) {
   const [historyKey, setHistoryKey] = useState(0);
@@ -71,6 +79,8 @@ export function HostPanel({
       musicStopNonce: 0,
       videoPlayNonce: 0,
       videoStopNonce: 0,
+      imagePlayNonce: 0,
+      imageStopNonce: 0,
     });
   }
 
@@ -88,6 +98,14 @@ export function HostPanel({
 
   async function stopVideo() {
     await patchSession({ videoStopNonce: videoStopNonce + 1 });
+  }
+
+  async function showImage() {
+    await patchSession({ imagePlayNonce: imagePlayNonce + 1 });
+  }
+
+  async function hideImage() {
+    await patchSession({ imageStopNonce: imageStopNonce + 1 });
   }
 
   async function setParticipantMode(mode: AnswerMode) {
@@ -228,6 +246,7 @@ export function HostPanel({
             <option key={q.id} value={q.id}>
               {q.kind === "MUSICAL" ? "🎵 " : ""}
               {q.kind === "VIDEO" ? "🎬 " : ""}
+              {q.kind === "IMAGE" ? "🖼 " : ""}
               {q.category} — {q.text.slice(0, 50)}…
             </option>
           ))}
@@ -242,8 +261,9 @@ export function HostPanel({
         <section className="space-y-2 rounded-lg border border-fuchsia-500/50 bg-fuchsia-950/40 p-3">
           <h3 className="font-semibold text-fuchsia-200">Extrait musical</h3>
           <p className="text-xs text-violet-300">
-            Sur l&apos;écran TV : toucher l&apos;écran une fois pour activer le son,
-            puis lancer l&apos;extrait MP3.
+            La question s&apos;affiche tout de suite sur l&apos;écran TV (sans son).
+            L&apos;extrait se précharge — lancez-le quand vous voulez. Seul le pupitre
+            démarre la lecture.
           </p>
           <div className="flex gap-2">
             <button
@@ -258,7 +278,33 @@ export function HostPanel({
               onClick={stopMusicExtract}
               className="rounded-lg bg-violet-800 px-4 py-2 font-bold hover:bg-violet-700"
             >
-              ⏸
+              ⏸ Arrêter
+            </button>
+          </div>
+        </section>
+      )}
+
+      {currentQuestion && isImageQuestion(currentQuestion) && (
+        <section className="space-y-2 rounded-lg border border-emerald-500/50 bg-emerald-950/40 p-3">
+          <h3 className="font-semibold text-emerald-200">Image</h3>
+          <p className="text-xs text-violet-300">
+            La question s&apos;affiche tout de suite sur l&apos;écran TV (sans image).
+            L&apos;image se précharge — affichez-la quand vous voulez.
+          </p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={showImage}
+              className="flex-1 rounded-lg bg-emerald-600 py-2 font-bold text-white hover:bg-emerald-500"
+            >
+              ▶ Afficher l&apos;image
+            </button>
+            <button
+              type="button"
+              onClick={hideImage}
+              className="rounded-lg bg-violet-800 px-4 py-2 font-bold hover:bg-violet-700"
+            >
+              ⏸ Masquer
             </button>
           </div>
         </section>
@@ -268,8 +314,10 @@ export function HostPanel({
         <section className="space-y-2 rounded-lg border border-indigo-500/50 bg-indigo-950/40 p-3">
           <h3 className="font-semibold text-indigo-200">Vidéo</h3>
           <p className="text-xs text-violet-300">
-            Sur l&apos;écran TV : toucher l&apos;écran une fois pour activer la lecture,
-            puis lancer la vidéo.
+            La question s&apos;affiche tout de suite sur l&apos;écran TV (sans
+            image). La vidéo se précharge en arrière-plan — lancez-la quand vous
+            voulez (ex. après avoir posé la question). Seul le pupitre démarre
+            la lecture ; un clic sur la vidéo ne fait rien.
           </p>
           <div className="flex gap-2">
             <button
@@ -277,14 +325,14 @@ export function HostPanel({
               onClick={playVideo}
               className="flex-1 rounded-lg bg-indigo-600 py-2 font-bold text-white hover:bg-indigo-500"
             >
-              ▶ Lancer la vidéo
+              ▶ Afficher la vidéo
             </button>
             <button
               type="button"
               onClick={stopVideo}
               className="rounded-lg bg-violet-800 px-4 py-2 font-bold hover:bg-violet-700"
             >
-              ⏸
+              ⏸ Masquer
             </button>
           </div>
         </section>

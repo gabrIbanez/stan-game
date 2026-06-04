@@ -8,8 +8,10 @@ import { HostPanel } from "@/components/game/HostPanel";
 import { SessionToolbar } from "@/components/game/SessionToolbar";
 import { ROUND_LABELS } from "@/lib/game-rules";
 import {
+  getImageUrl,
   getMusicalAudioUrl,
   getVideoUrl,
+  isImageQuestion,
   isMusicalQuestion,
   isVideoQuestion,
 } from "@/lib/question-utils";
@@ -132,6 +134,11 @@ export default function SessionPage() {
             showMusicalPlayer={false}
             isVideo={isVideoQuestion(currentQuestion)}
             showVideoPlayer={false}
+            imageUrl={getImageUrl(currentQuestion)}
+            imagePlayNonce={session.imagePlayNonce}
+            imageStopNonce={session.imageStopNonce}
+            isImage={isImageQuestion(currentQuestion)}
+            showImagePlayer={false}
           />
         ) : (
           <div className="flex flex-1 items-center justify-center bg-gradient-to-b from-indigo-950 to-purple-950 p-8 text-center">
@@ -163,6 +170,8 @@ export default function SessionPage() {
           musicStopNonce={session.musicStopNonce}
           videoPlayNonce={session.videoPlayNonce}
           videoStopNonce={session.videoStopNonce}
+          imagePlayNonce={session.imagePlayNonce}
+          imageStopNonce={session.imageStopNonce}
           onSessionUpdate={refresh}
         />
       </div>

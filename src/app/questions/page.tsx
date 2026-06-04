@@ -114,6 +114,9 @@ export default function QuestionsPage() {
               {q.kind === "VIDEO" && (
                 <span className="rounded bg-indigo-800 px-2 py-0.5">🎬 Vidéo</span>
               )}
+              {q.kind === "IMAGE" && (
+                <span className="rounded bg-emerald-800 px-2 py-0.5">🖼 Image</span>
+              )}
               {q.theme && (
                 <span className="rounded bg-indigo-800 px-2 py-0.5">{q.theme}</span>
               )}

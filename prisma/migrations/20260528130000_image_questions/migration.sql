@@ -1,0 +1,13 @@
+-- AlterTable
+ALTER TABLE "Question" ADD COLUMN IF NOT EXISTS "imageUrl" TEXT;
+
+-- AlterTable
+ALTER TABLE "GameSession" ADD COLUMN IF NOT EXISTS "imagePlayNonce" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "GameSession" ADD COLUMN IF NOT EXISTS "imageStopNonce" INTEGER NOT NULL DEFAULT 0;
+
+-- AddEnumValue
+DO $$ BEGIN
+  ALTER TYPE "QuestionKind" ADD VALUE IF NOT EXISTS 'IMAGE';
+EXCEPTION
+  WHEN duplicate_object THEN NULL;
+END $$;

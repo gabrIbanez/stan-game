@@ -62,6 +62,12 @@ export async function PATCH(request: Request, { params }: Params) {
       ...(body.videoStopNonce !== undefined && {
         videoStopNonce: body.videoStopNonce,
       }),
+      ...(body.imagePlayNonce !== undefined && {
+        imagePlayNonce: body.imagePlayNonce,
+      }),
+      ...(body.imageStopNonce !== undefined && {
+        imageStopNonce: body.imageStopNonce,
+      }),
     },
     include: {
       players: { orderBy: { orderIndex: "asc" } },

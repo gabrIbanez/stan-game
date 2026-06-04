@@ -35,6 +35,12 @@ export async function PATCH(request: Request, { params }: Params) {
         ? String(body.videoUrl).trim()
         : null
       : existing.videoUrl;
+  const imageUrl =
+    body.imageUrl !== undefined
+      ? body.imageUrl
+        ? String(body.imageUrl).trim()
+        : null
+      : existing.imageUrl;
 
   if (kind === "MUSICAL" && !audioUrl) {
     return NextResponse.json(
@@ -46,6 +52,13 @@ export async function PATCH(request: Request, { params }: Params) {
   if (kind === "VIDEO" && !videoUrl) {
     return NextResponse.json(
       { error: "Une vidéo est requise pour une question vidéo." },
+      { status: 400 },
+    );
+  }
+
+  if (kind === "IMAGE" && !imageUrl) {
+    return NextResponse.json(
+      { error: "Une image est requise pour une question image." },
       { status: 400 },
     );
   }
@@ -71,6 +84,7 @@ export async function PATCH(request: Request, { params }: Params) {
       ...(body.kind !== undefined && { kind }),
       audioUrl: kind === "MUSICAL" ? audioUrl : null,
       videoUrl: kind === "VIDEO" ? videoUrl : null,
+      imageUrl: kind === "IMAGE" ? imageUrl : null,
     },
   });
 

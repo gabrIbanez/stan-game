@@ -43,6 +43,7 @@ export async function POST(request: Request) {
   const notes = body.notes ? String(body.notes) : undefined;
   const audioUrl = body.audioUrl ? String(body.audioUrl).trim() : null;
   const videoUrl = body.videoUrl ? String(body.videoUrl).trim() : null;
+  const imageUrl = body.imageUrl ? String(body.imageUrl).trim() : null;
 
   if (!text.trim() || !category.trim() || !correctAnswer.trim()) {
     return NextResponse.json(
@@ -72,6 +73,13 @@ export async function POST(request: Request) {
     );
   }
 
+  if (kind === "IMAGE" && !imageUrl) {
+    return NextResponse.json(
+      { error: "Uploadez une image pour une question image." },
+      { status: 400 },
+    );
+  }
+
   try {
     const question = await prisma.question.create({
       data: {
@@ -87,6 +95,7 @@ export async function POST(request: Request) {
         notes: notes?.trim() || null,
         audioUrl: kind === "MUSICAL" ? audioUrl : null,
         videoUrl: kind === "VIDEO" ? videoUrl : null,
+        imageUrl: kind === "IMAGE" ? imageUrl : null,
       },
     });
 

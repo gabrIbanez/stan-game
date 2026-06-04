@@ -5,8 +5,10 @@ import { useParams } from "next/navigation";
 import type { GameSession, GamePlayer, Question } from "@/types/game";
 import { GameBoard } from "@/components/game/GameBoard";
 import {
+  getImageUrl,
   getMusicalAudioUrl,
   getVideoUrl,
+  isImageQuestion,
   isMusicalQuestion,
   isVideoQuestion,
 } from "@/lib/question-utils";
@@ -35,7 +37,7 @@ export default function EcranPage() {
 
   useEffect(() => {
     refresh();
-    const interval = setInterval(refresh, 800);
+    const interval = setInterval(refresh, 500);
     return () => clearInterval(interval);
   }, [refresh]);
 
@@ -87,6 +89,11 @@ export default function EcranPage() {
         videoStopNonce={session.videoStopNonce}
         isVideo={isVideoQuestion(currentQuestion)}
         showVideoPlayer={isVideoQuestion(currentQuestion)}
+        imageUrl={getImageUrl(currentQuestion)}
+        imagePlayNonce={session.imagePlayNonce}
+        imageStopNonce={session.imageStopNonce}
+        isImage={isImageQuestion(currentQuestion)}
+        showImagePlayer={isImageQuestion(currentQuestion)}
       />
     </div>
   );

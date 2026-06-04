@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-
-const UNLOCK_KEY = "stan-game-tv-video-unlocked";
+import { TV_MEDIA_UNLOCK_KEY } from "@/lib/constants";
 
 type VideoPromptProps = {
   videoUrl: string;
@@ -10,100 +9,144 @@ type VideoPromptProps = {
   stopNonce: number;
 };
 
-export function VideoPrompt({ videoUrl, playNonce, stopNonce }: VideoPromptProps) {
+function waitForCanPlay(el: HTMLVideoElement) {
+  if (el.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA) return Promise.resolve();
+  return new Promise<void>((resolve) => {
+    const done = () => {
+      el.removeEventListener("canplay", done);
+      resolve();
+    };
+    el.addEventListener("canplay", done);
+  });
+}
+
+/**
+ * Précharge en arrière-plan. Lecture uniquement via playNonce (pupitre).
+ * La balise vidéo ignore les clics — pas de play/pause par le public.
+ */
+export function VideoPrompt({
+  videoUrl,
+  playNonce,
+  stopNonce,
+}: VideoPromptProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [unlocked, setUnlocked] = useState(false);
-  const [playing, setPlaying] = useState(false);
-  const [pendingPlay, setPendingPlay] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [playingMuted, setPlayingMuted] = useState(false);
+  const [soundUnlocked, setSoundUnlocked] = useState(false);
 
   useEffect(() => {
-    if (
-      typeof window !== "undefined" &&
-      sessionStorage.getItem(UNLOCK_KEY) === "1"
-    ) {
-      setUnlocked(true);
+    if (typeof window !== "undefined" && sessionStorage.getItem(TV_MEDIA_UNLOCK_KEY) === "1") {
+      setSoundUnlocked(true);
     }
   }, []);
 
-  const stopPlayback = useCallback(() => {
-    setPlaying(false);
-    setPendingPlay(false);
+  const resetPreload = useCallback(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    setVisible(false);
+    setPlayingMuted(false);
+    el.pause();
+    el.muted = true;
+    el.src = videoUrl;
+    el.load();
+  }, [videoUrl]);
+
+  useEffect(() => {
+    resetPreload();
+  }, [resetPreload]);
+
+  const hide = useCallback(() => {
     const el = videoRef.current;
     if (!el) return;
     el.pause();
     el.currentTime = 0;
+    el.muted = true;
+    setVisible(false);
+    setPlayingMuted(false);
   }, []);
 
-  const startPlayback = useCallback(() => {
+  useEffect(() => {
+    if (stopNonce <= 0) return;
+    hide();
+  }, [stopNonce, hide]);
+
+  const startFromHost = useCallback(async () => {
     const el = videoRef.current;
     if (!el) return;
-    el.currentTime = 0;
-    void el.play().catch(() => {
-      setPendingPlay(true);
-      setPlaying(false);
-    });
-    setPlaying(true);
-    setPendingPlay(false);
-  }, []);
 
-  const unlockAndMaybePlay = useCallback(() => {
-    setUnlocked(true);
-    sessionStorage.setItem(UNLOCK_KEY, "1");
-    if (pendingPlay || playNonce > 0) startPlayback();
-  }, [pendingPlay, playNonce, startPlayback]);
+    setVisible(true);
+    el.currentTime = 0;
+    await waitForCanPlay(el);
+
+    if (soundUnlocked) {
+      el.muted = false;
+      try {
+        await el.play();
+        setPlayingMuted(false);
+        return;
+      } catch {
+        /* repli muet ci-dessous */
+      }
+    }
+
+    el.muted = true;
+    try {
+      await el.play();
+      setPlayingMuted(true);
+    } catch {
+      setPlayingMuted(false);
+      setVisible(false);
+    }
+  }, [soundUnlocked]);
 
   useEffect(() => {
     if (playNonce <= 0) return;
-    if (unlocked) startPlayback();
-    else setPendingPlay(true);
-  }, [playNonce, unlocked, startPlayback]);
+    void startFromHost();
+  }, [playNonce, startFromHost]);
 
-  useEffect(() => {
-    if (stopNonce > 0) stopPlayback();
-  }, [stopNonce, stopPlayback]);
-
-  if (!unlocked) {
-    return (
-      <button
-        type="button"
-        onClick={unlockAndMaybePlay}
-        className="relative z-10 mx-auto mb-8 block w-full max-w-3xl rounded-3xl border-4 border-amber-400 bg-gradient-to-b from-amber-600/90 to-orange-700/90 px-8 py-14 text-center shadow-2xl"
-      >
-        <p className="text-5xl">📺</p>
-        <p className="mt-4 text-2xl font-black text-white">
-          Touchez l&apos;écran pour activer la vidéo
-        </p>
-        <p className="mt-3 text-violet-100">Une fois par session TV</p>
-        {pendingPlay && (
-          <p className="mt-4 animate-pulse text-lg font-bold text-lime-200">
-            Vidéo en attente — recliquez
-          </p>
-        )}
-      </button>
-    );
+  async function enableSound() {
+    const el = videoRef.current;
+    if (!el || !visible) return;
+    setSoundUnlocked(true);
+    sessionStorage.setItem(TV_MEDIA_UNLOCK_KEY, "1");
+    el.muted = false;
+    try {
+      await el.play();
+      setPlayingMuted(false);
+    } catch {
+      setPlayingMuted(true);
+    }
   }
 
   return (
-    <div className="relative z-10 mx-auto mb-8 w-full max-w-5xl">
-      {!playing && (
-        <div className="mb-4 rounded-2xl border border-indigo-400/40 bg-indigo-950/30 px-6 py-4 text-center">
-          <p className="text-sm font-semibold text-indigo-200">Question vidéo</p>
-          <p className="text-xs text-violet-300">
-            En attente — le présentateur lance la vidéo
-          </p>
-        </div>
+    <>
+      <video
+        ref={videoRef}
+        preload="auto"
+        playsInline
+        disablePictureInPicture
+        controls={false}
+        tabIndex={-1}
+        className={
+          visible
+            ? "pointer-events-none relative z-10 mx-auto mb-8 block aspect-video w-full max-w-5xl rounded-3xl border-4 border-indigo-400 bg-black shadow-2xl"
+            : "pointer-events-none fixed left-0 top-0 h-px w-px opacity-0"
+        }
+        onEnded={() => hide()}
+      />
+
+      {playingMuted && visible && (
+        <button
+          type="button"
+          onClick={enableSound}
+          className="relative z-20 mx-auto mb-8 block w-full max-w-2xl rounded-2xl border-4 border-amber-400 bg-amber-700/90 px-6 py-4 text-center font-bold text-white shadow-xl"
+        >
+          Activer le son (staff — écran TV)
+          <span className="mt-1 block text-sm font-normal text-amber-100">
+            La vidéo est déjà lancée par le présentateur
+          </span>
+        </button>
       )}
-      <div className="overflow-hidden rounded-3xl border-4 border-indigo-400 shadow-2xl">
-        <video
-          ref={videoRef}
-          src={videoUrl}
-          className="aspect-video w-full bg-black"
-          playsInline
-          controls={false}
-          onEnded={() => setPlaying(false)}
-        />
-      </div>
-    </div>
+    </>
   );
 }
-

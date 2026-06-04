@@ -50,4 +50,8 @@ next-env.d.ts
 /public/video/*
 !/public/video/.gitkeep
 
+# uploads images locaux
+/public/images/*
+!/public/images/.gitkeep
+
 /src/generated/prisma
