@@ -2,17 +2,24 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { Question } from "@/types/game";
+import { AdminPasswordGate } from "@/components/admin/AdminPasswordGate";
 import { QuestionForm } from "@/components/questions/QuestionForm";
+import { adminFetch } from "@/lib/admin-auth";
 import { ANSWER_MODE_OPTIONS, QUESTION_ROUND_OPTIONS } from "@/lib/constants";
 
-export default function QuestionsPage() {
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [editing, setEditing] = useState<Question | null>(null);
+type QuestionWithAuthor = Question & {
+  contributor?: { name: string } | null;
+};
+
+function QuestionsContent() {
+  const [questions, setQuestions] = useState<QuestionWithAuthor[]>([]);
+  const [editing, setEditing] = useState<QuestionWithAuthor | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [filter, setFilter] = useState<string>("");
 
   const load = useCallback(async () => {
-    const res = await fetch("/api/questions");
+    const res = await adminFetch("/api/questions");
+    if (!res.ok) return;
     setQuestions(await res.json());
   }, []);
 
@@ -22,7 +29,7 @@ export default function QuestionsPage() {
 
   async function handleDelete(id: string) {
     if (!confirm("Supprimer cette question ?")) return;
-    await fetch(`/api/questions/${id}`, { method: "DELETE" });
+    await adminFetch(`/api/questions/${id}`, { method: "DELETE" });
     load();
   }
 
@@ -97,6 +104,11 @@ export default function QuestionsPage() {
             className="rounded-xl border border-violet-800 bg-violet-950/40 p-4"
           >
             <div className="mb-1 flex flex-wrap gap-2 text-xs">
+              {q.contributor?.name && (
+                <span className="rounded bg-amber-900/80 px-2 py-0.5 text-amber-200">
+                  ✨ {q.contributor.name}
+                </span>
+              )}
               <span className="rounded bg-violet-800 px-2 py-0.5">
                 {roundLabel(q.round)}
               </span>
@@ -153,5 +165,13 @@ export default function QuestionsPage() {
         <p className="text-center text-violet-400">Aucune question pour le moment.</p>
       )}
     </div>
+  );
+}
+
+export default function QuestionsPage() {
+  return (
+    <AdminPasswordGate title="Banque de questions">
+      <QuestionsContent />
+    </AdminPasswordGate>
   );
 }

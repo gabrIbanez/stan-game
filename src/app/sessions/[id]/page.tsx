@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import type { GameSession, GamePlayer, Question } from "@/types/game";
+import { AdminPasswordGate } from "@/components/admin/AdminPasswordGate";
+import { adminFetch } from "@/lib/admin-auth";
 import { GameBoard } from "@/components/game/GameBoard";
 import { HostPanel } from "@/components/game/HostPanel";
 import { SessionToolbar } from "@/components/game/SessionToolbar";
@@ -30,7 +32,7 @@ export default function SessionPage() {
   const refresh = useCallback(async () => {
     const [sRes, qRes] = await Promise.all([
       fetch(`/api/sessions/${id}`),
-      fetch(`/api/questions?sessionId=${id}`),
+      adminFetch(`/api/questions?sessionId=${id}`),
     ]);
     const s = await sRes.json();
     const q = await qRes.json();
@@ -79,6 +81,7 @@ export default function SessionPage() {
       : champion?.score;
 
   return (
+    <AdminPasswordGate title="Pupitre présentateur">
     <div className="flex h-[calc(100vh-57px)] flex-col lg:flex-row">
       <div className="flex flex-1 flex-col">
         <SessionToolbar
@@ -179,5 +182,6 @@ export default function SessionPage() {
         />
       </div>
     </div>
+    </AdminPasswordGate>
   );
 }

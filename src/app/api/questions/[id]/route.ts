@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isAdminSession } from "@/lib/admin-auth-server";
 import { prisma } from "@/lib/prisma";
 import type { AnswerMode, QuestionKind, QuestionRound } from "@/types/game";
 
@@ -14,6 +15,10 @@ export async function GET(_request: Request, { params }: Params) {
 }
 
 export async function PATCH(request: Request, { params }: Params) {
+  if (!(await isAdminSession())) {
+    return NextResponse.json({ error: "Accès réservé au présentateur." }, { status: 401 });
+  }
+
   const { id } = await params;
   const body = await request.json();
 
@@ -92,6 +97,10 @@ export async function PATCH(request: Request, { params }: Params) {
 }
 
 export async function DELETE(_request: Request, { params }: Params) {
+  if (!(await isAdminSession())) {
+    return NextResponse.json({ error: "Accès réservé au présentateur." }, { status: 401 });
+  }
+
   const { id } = await params;
   await prisma.question.delete({ where: { id } });
   return NextResponse.json({ ok: true });

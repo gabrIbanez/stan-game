@@ -7,6 +7,7 @@ import {
   QUESTION_KIND_OPTIONS,
   QUESTION_ROUND_OPTIONS,
 } from "@/lib/constants";
+import { adminFetch } from "@/lib/admin-auth";
 import {
   uploadImage,
   uploadMp3,
@@ -105,7 +106,7 @@ export function QuestionForm({ initial, onSaved, onCancel }: QuestionFormProps) 
       };
 
       const url = initial ? `/api/questions/${initial.id}` : "/api/questions";
-      const res = await fetch(url, {
+      const res = await adminFetch(url, {
         method: initial ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),

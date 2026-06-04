@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
+import { isAdminSession } from "@/lib/admin-auth-server";
 import { prisma } from "@/lib/prisma";
 import type { AnswerMode, QuestionKind, QuestionRound } from "@/types/game";
 
 export async function GET(request: Request) {
+  if (!(await isAdminSession())) {
+    return NextResponse.json({ error: "Accès réservé au présentateur." }, { status: 401 });
+  }
   const { searchParams } = new URL(request.url);
   const round = searchParams.get("round") as QuestionRound | null;
   const theme = searchParams.get("theme");
@@ -19,15 +23,17 @@ export async function GET(request: Request) {
       ...(qualifSlot ? { qualifSlot: Number(qualifSlot) } : {}),
     },
     orderBy: { createdAt: "desc" },
-    ...(sessionId
-      ? { include: { contributor: { select: { name: true } } } }
-      : {}),
+    include: { contributor: { select: { name: true } } },
   });
 
   return NextResponse.json(questions);
 }
 
 export async function POST(request: Request) {
+  if (!(await isAdminSession())) {
+    return NextResponse.json({ error: "Accès réservé au présentateur." }, { status: 401 });
+  }
+
   let body: Record<string, unknown>;
   try {
     body = await request.json();
