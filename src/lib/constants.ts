@@ -1,5 +1,10 @@
 export const APP_TITLE = "Qui veut prendre la place de Stan ?";
 
+/** Sur Vercel : uploads directs vers Blob (évite la limite 4,5 Mo des fonctions). */
+export const USE_BLOB_UPLOAD =
+  process.env.NEXT_PUBLIC_VERCEL === "1" ||
+  process.env.NEXT_PUBLIC_BLOB_UPLOAD === "1";
+
 /** sessionStorage : activation lecture média sur l'écran TV (une fois par session). */
 export const TV_MEDIA_UNLOCK_KEY = "stan-game-tv-audio-unlocked";
 

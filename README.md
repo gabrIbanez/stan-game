@@ -1,6 +1,6 @@
 # Qui veut prendre la place de Stan ?
 
-Application locale de quiz façon « Tout le monde veut prendre sa place », pour animer une partie en tant que présentateur.
+Application de quiz façon « Tout le monde veut prendre sa place », pour animer une partie en tant que présentateur (local ou hébergée).
 
 ## Stack
 
@@ -50,3 +50,11 @@ Copiez `.env.example` vers `.env` :
 ```
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/stan_game?schema=public"
 ```
+
+## Mise en ligne (gratuit, entre potes)
+
+Guide pas à pas : **[DEPLOY.md](./DEPLOY.md)** — Vercel + Neon + Blob, URL aléatoire type `xxx.vercel.app`, ~10 min.
+
+En local, les médias restent dans `public/audio`, `public/video`, `public/images`. En prod sur Vercel, ils vont sur **Blob** automatiquement.
+
+**Alternative** : Docker sur un VPS → `docker-compose.prod.yml` et `.env.production.example`.
