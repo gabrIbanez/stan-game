@@ -7,14 +7,21 @@ export async function GET(request: Request) {
   const round = searchParams.get("round") as QuestionRound | null;
   const theme = searchParams.get("theme");
   const qualifSlot = searchParams.get("qualifSlot");
+  const sessionId = searchParams.get("sessionId");
 
   const questions = await prisma.question.findMany({
     where: {
+      ...(sessionId
+        ? { OR: [{ sessionId: null }, { sessionId }] }
+        : {}),
       ...(round ? { round } : {}),
       ...(theme ? { theme } : {}),
       ...(qualifSlot ? { qualifSlot: Number(qualifSlot) } : {}),
     },
     orderBy: { createdAt: "desc" },
+    ...(sessionId
+      ? { include: { contributor: { select: { name: true } } } }
+      : {}),
   });
 
   return NextResponse.json(questions);

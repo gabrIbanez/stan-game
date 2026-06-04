@@ -9,6 +9,8 @@ import {
   isMusicalQuestion,
   isVideoQuestion,
 } from "@/lib/question-utils";
+import { JoinQrDisplay } from "@/components/game/JoinQrDisplay";
+import { buildJoinUrl } from "@/lib/session-join";
 
 type Player = {
   id: string;
@@ -17,13 +19,21 @@ type Player = {
   qualified: boolean;
   eliminated: boolean;
   isChampion: boolean;
+  joinedViaQr?: boolean;
+};
+
+type QuestionWithContributor = Question & {
+  contributor?: { name: string } | null;
 };
 
 type HostPanelProps = {
   sessionId: string;
   currentRound: GameRound;
   players: Player[];
-  questions: Question[];
+  questions: QuestionWithContributor[];
+  registrationsOpen: boolean;
+  showJoinQrOnScreen: boolean;
+  sessionStatus: string;
   currentQuestionId: string | null;
   displayMode: AnswerMode | null;
   revealAnswer: boolean;
@@ -56,6 +66,9 @@ export function HostPanel({
   videoStopNonce,
   imagePlayNonce,
   imageStopNonce,
+  registrationsOpen,
+  showJoinQrOnScreen,
+  sessionStatus,
   onSessionUpdate,
 }: HostPanelProps) {
   const [historyKey, setHistoryKey] = useState(0);
@@ -234,6 +247,69 @@ export function HostPanel({
         </section>
       )}
 
+      <section className="space-y-3 rounded-lg border border-cyan-500/40 bg-cyan-950/20 p-3">
+        <h3 className="font-semibold text-cyan-200">Inscriptions (QR)</h3>
+        <JoinQrDisplay
+          sessionId={sessionId}
+          playerCount={players.length}
+          registrationsOpen={registrationsOpen}
+          size="compact"
+        />
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() =>
+              patchSession({ registrationsOpen: !registrationsOpen })
+            }
+            className={`flex-1 rounded-lg py-2 text-xs font-bold ${
+              registrationsOpen
+                ? "bg-lime-700 text-white"
+                : "bg-red-900 text-red-100"
+            }`}
+          >
+            {registrationsOpen ? "Clore les inscriptions" : "Rouvrir inscriptions"}
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              patchSession({ showJoinQrOnScreen: !showJoinQrOnScreen })
+            }
+            className={`flex-1 rounded-lg py-2 text-xs font-bold ${
+              showJoinQrOnScreen
+                ? "bg-cyan-600 text-white"
+                : "bg-violet-800 text-violet-200"
+            }`}
+          >
+            {showJoinQrOnScreen ? "Masquer QR sur TV" : "Afficher QR sur TV"}
+          </button>
+        </div>
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(buildJoinUrl(sessionId));
+            } catch {
+              /* ignore */
+            }
+          }}
+          className="w-full rounded-lg border border-violet-600 py-1.5 text-xs text-violet-300 hover:bg-violet-900"
+        >
+          Copier le lien d&apos;inscription
+        </button>
+        {sessionStatus === "SETUP" && players.length > 0 && (
+          <button
+            type="button"
+            onClick={() => patchSession({ status: "IN_PROGRESS" })}
+            className="w-full rounded-lg bg-amber-500 py-2 font-bold text-black"
+          >
+            Lancer la partie ({players.length} inscrits)
+          </button>
+        )}
+        <p className="text-[10px] text-violet-500">
+          {players.filter((p) => p.joinedViaQr).length} inscrit(s) via QR
+        </p>
+      </section>
+
       <section className="space-y-2">
         <h3 className="font-semibold text-white">1. Charger une question</h3>
         <select
@@ -247,6 +323,7 @@ export function HostPanel({
               {q.kind === "MUSICAL" ? "🎵 " : ""}
               {q.kind === "VIDEO" ? "🎬 " : ""}
               {q.kind === "IMAGE" ? "🖼 " : ""}
+              {q.contributor?.name ? `✨ ${q.contributor.name} · ` : ""}
               {q.category} — {q.text.slice(0, 50)}…
             </option>
           ))}

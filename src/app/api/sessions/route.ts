@@ -15,15 +15,19 @@ export async function GET() {
 
 export async function POST(request: Request) {
   const body = await request.json();
-  const { players, championName, competTheme } = body as {
-    players: string[];
+  const { players, championName, competTheme, useQrRegistration } = body as {
+    players?: string[];
     championName?: string;
     competTheme?: string;
+    useQrRegistration?: boolean;
   };
 
-  if (!players?.length) {
+  const playerNames = (players ?? []).map((n) => n.trim()).filter(Boolean);
+  const qrMode = Boolean(useQrRegistration);
+
+  if (!playerNames.length && !qrMode) {
     return NextResponse.json(
-      { error: "Ajoutez au moins un participant." },
+      { error: "Ajoutez au moins un participant ou activez les inscriptions par QR." },
       { status: 400 },
     );
   }
@@ -32,13 +36,15 @@ export async function POST(request: Request) {
     data: {
       championName: championName?.trim() || null,
       competTheme: competTheme?.trim() || null,
-      status: "IN_PROGRESS",
+      status: qrMode && !playerNames.length ? "SETUP" : "IN_PROGRESS",
+      registrationsOpen: true,
+      showJoinQrOnScreen: qrMode,
       players: {
-        create: players.map((name, index) => ({
-          name: name.trim(),
+        create: playerNames.map((name, index) => ({
+          name,
           orderIndex: index,
           isChampion: championName
-            ? name.trim().toLowerCase() === championName.trim().toLowerCase()
+            ? name.toLowerCase() === championName.trim().toLowerCase()
             : false,
         })),
       },

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import type { GameSession, GamePlayer, Question } from "@/types/game";
 import { GameBoard } from "@/components/game/GameBoard";
+import { JoinQrDisplay } from "@/components/game/JoinQrDisplay";
 import {
   getImageUrl,
   getMusicalAudioUrl,
@@ -41,7 +42,32 @@ export default function EcranPage() {
     return () => clearInterval(interval);
   }, [refresh]);
 
-  if (!session || !currentQuestion) {
+  if (!session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-indigo-950 to-purple-950">
+        <p className="text-3xl font-bold text-amber-400 animate-pulse">Chargement…</p>
+      </div>
+    );
+  }
+
+  const showQr =
+    session.showJoinQrOnScreen &&
+    !session.currentQuestionId;
+
+  if (showQr) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-indigo-950 via-purple-950 to-indigo-950 py-12">
+        <JoinQrDisplay
+          sessionId={id}
+          playerCount={session.players.length}
+          registrationsOpen={session.registrationsOpen}
+          size="tv"
+        />
+      </div>
+    );
+  }
+
+  if (!currentQuestion) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-indigo-950 to-purple-950">
         <p className="text-3xl font-bold text-amber-400 animate-pulse">
@@ -52,7 +78,6 @@ export default function EcranPage() {
   }
 
   const displayMode = session.displayMode;
-
   const champion = session.players.find((p) => p.isChampion);
   const challenger = session.players
     .filter((p) => !p.isChampion && !p.eliminated)

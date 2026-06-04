@@ -60,6 +60,10 @@ model Question {
   audioUrl            String?
   videoUrl            String?
   imageUrl            String?
+  sessionId           String?
+  session             GameSession?  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  contributorPlayerId String?
+  contributor         GamePlayer?   @relation(fields: [contributorPlayerId], references: [id], onDelete: SetNull)
   createdAt           DateTime      @default(now())
   updatedAt           DateTime      @updatedAt
 }
@@ -82,10 +86,13 @@ model GameSession {
   videoStopNonce    Int           @default(0)
   imagePlayNonce    Int           @default(0)
   imageStopNonce    Int           @default(0)
+  registrationsOpen Boolean       @default(true)
+  showJoinQrOnScreen Boolean      @default(false)
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
   players           GamePlayer[]
   responses         PlayerResponse[]
+  contributedQuestions Question[]
 }
 
 model GamePlayer {
@@ -98,7 +105,9 @@ model GamePlayer {
   qualified  Boolean          @default(false)
   isChampion Boolean          @default(false)
   eliminated Boolean          @default(false)
+  joinedViaQr Boolean         @default(false)
   responses  PlayerResponse[]
+  contributedQuestions Question[]
 }
 
 model PlayerResponse {

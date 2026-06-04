@@ -30,7 +30,7 @@ export default function SessionPage() {
   const refresh = useCallback(async () => {
     const [sRes, qRes] = await Promise.all([
       fetch(`/api/sessions/${id}`),
-      fetch("/api/questions"),
+      fetch(`/api/questions?sessionId=${id}`),
     ]);
     const s = await sRes.json();
     const q = await qRes.json();
@@ -172,6 +172,9 @@ export default function SessionPage() {
           videoStopNonce={session.videoStopNonce}
           imagePlayNonce={session.imagePlayNonce}
           imageStopNonce={session.imageStopNonce}
+          registrationsOpen={session.registrationsOpen}
+          showJoinQrOnScreen={session.showJoinQrOnScreen}
+          sessionStatus={session.status}
           onSessionUpdate={refresh}
         />
       </div>

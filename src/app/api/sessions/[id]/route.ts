@@ -68,6 +68,12 @@ export async function PATCH(request: Request, { params }: Params) {
       ...(body.imageStopNonce !== undefined && {
         imageStopNonce: body.imageStopNonce,
       }),
+      ...(body.registrationsOpen !== undefined && {
+        registrationsOpen: body.registrationsOpen,
+      }),
+      ...(body.showJoinQrOnScreen !== undefined && {
+        showJoinQrOnScreen: body.showJoinQrOnScreen,
+      }),
     },
     include: {
       players: { orderBy: { orderIndex: "asc" } },
