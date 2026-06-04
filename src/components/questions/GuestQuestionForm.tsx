@@ -251,6 +251,18 @@ export function GuestQuestionForm({
       >
         {loading ? "Envoi…" : "Envoyer ma question"}
       </button>
+
+      <a
+        href={`/sessions/${sessionId}/ecran`}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block w-full rounded-xl border-2 border-fuchsia-500 bg-fuchsia-950/40 py-3 text-center font-bold text-fuchsia-200 hover:bg-fuchsia-900/50"
+      >
+        Ouvrir l&apos;écran TV de la partie ↗
+      </a>
+      <p className="text-center text-xs text-violet-500">
+        À afficher sur la télé ou un grand écran pendant le jeu.
+      </p>
     </form>
   );
 }
